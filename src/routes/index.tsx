@@ -51,13 +51,15 @@ const orders = [
 ];
 
 function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <Hero />
+      <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
       <Categories />
-      <ProductGrid />
+      <ProductGrid searchQuery={searchQuery} />
       <Checkout />
       <Dashboard />
       <Footer />
