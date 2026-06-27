@@ -331,11 +331,31 @@ function Categories() {
   );
 }
 
-function ProductGrid() {
+function ProductGrid({ searchQuery }: { searchQuery: string }) {
+  const query = searchQuery.trim().toLowerCase();
+  const filtered = products.filter((p) =>
+    !query ||
+    p.name.toLowerCase().includes(query) ||
+    p.category.toLowerCase().includes(query)
+  );
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
+      {query && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          {filtered.length === 0 ? (
+            <span>
+              No results for "<span className="font-medium text-foreground">{searchQuery}</span>".
+            </span>
+          ) : (
+            <span>
+              {filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"
+            </span>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((p) => (
+        {filtered.map((p) => (
           <article key={p.name} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
             <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
               <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
