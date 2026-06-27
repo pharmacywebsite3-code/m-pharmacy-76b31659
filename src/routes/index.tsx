@@ -27,7 +27,9 @@ const categories = [
 
 const products = [
   { name: "Paracetamol 500mg", category: "Pain Relief", price: 4.99, badge: "OTC" },
+  { name: "Aspirin 100mg", category: "Pain Relief", price: 5.49, badge: "OTC" },
   { name: "Vitamin D3 1000 IU", category: "Vitamins", price: 12.5, badge: "Best Seller" },
+  { name: "Vitamin C 500mg", category: "Vitamins", price: 9.99, badge: "Popular" },
   { name: "Sterile Bandages (24pk)", category: "First Aid", price: 6.75, badge: null },
   { name: "Omega-3 Fish Oil", category: "Wellness", price: 18.99, badge: "New" },
   { name: "Cough Syrup 200ml", category: "Cold & Flu", price: 8.4, badge: null },
