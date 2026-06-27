@@ -105,7 +105,7 @@ function Header() {
   );
 }
 
-function Hero() {
+function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-soft/60 via-background to-background" />
@@ -132,6 +132,8 @@ function Hero() {
                 <Search className="h-5 w-5 text-muted-foreground" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search medications, brands, or symptoms…"
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                 />
@@ -141,8 +143,12 @@ function Hero() {
               </button>
             </form>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {["Paracetamol", "Vitamin D", "Insulin", "Ventolin", "Allergy"].map((t) => (
-                <button key={t} className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary">
+              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setSearchQuery(t)}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
                   {t}
                 </button>
               ))}
