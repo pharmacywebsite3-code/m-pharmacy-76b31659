@@ -27,7 +27,9 @@ const categories = [
 
 const products = [
   { name: "Paracetamol 500mg", category: "Pain Relief", price: 4.99, badge: "OTC" },
+  { name: "Aspirin 100mg", category: "Pain Relief", price: 5.49, badge: "OTC" },
   { name: "Vitamin D3 1000 IU", category: "Vitamins", price: 12.5, badge: "Best Seller" },
+  { name: "Vitamin C 500mg", category: "Vitamins", price: 9.99, badge: "Popular" },
   { name: "Sterile Bandages (24pk)", category: "First Aid", price: 6.75, badge: null },
   { name: "Omega-3 Fish Oil", category: "Wellness", price: 18.99, badge: "New" },
   { name: "Cough Syrup 200ml", category: "Cold & Flu", price: 8.4, badge: null },
@@ -49,13 +51,15 @@ const orders = [
 ];
 
 function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <Hero />
+      <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
       <Categories />
-      <ProductGrid />
+      <ProductGrid searchQuery={searchQuery} />
       <Checkout />
       <Dashboard />
       <Footer />
@@ -101,7 +105,7 @@ function Header() {
   );
 }
 
-function Hero() {
+function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-soft/60 via-background to-background" />
@@ -128,6 +132,8 @@ function Hero() {
                 <Search className="h-5 w-5 text-muted-foreground" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search medications, brands, or symptoms…"
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                 />
@@ -137,8 +143,12 @@ function Hero() {
               </button>
             </form>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {["Paracetamol", "Vitamin D", "Insulin", "Ventolin", "Allergy"].map((t) => (
-                <button key={t} className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary">
+              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setSearchQuery(t)}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
                   {t}
                 </button>
               ))}
@@ -321,11 +331,31 @@ function Categories() {
   );
 }
 
-function ProductGrid() {
+function ProductGrid({ searchQuery }: { searchQuery: string }) {
+  const query = searchQuery.trim().toLowerCase();
+  const filtered = products.filter((p) =>
+    !query ||
+    p.name.toLowerCase().includes(query) ||
+    p.category.toLowerCase().includes(query)
+  );
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
+      {query && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          {filtered.length === 0 ? (
+            <span>
+              No results for "<span className="font-medium text-foreground">{searchQuery}</span>".
+            </span>
+          ) : (
+            <span>
+              {filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"
+            </span>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((p) => (
+        {filtered.map((p) => (
           <article key={p.name} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
             <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
               <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
