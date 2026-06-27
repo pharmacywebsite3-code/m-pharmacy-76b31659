@@ -323,25 +323,27 @@ function Categories() {
 
 function ProductGrid() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-10">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <section className="mx-auto max-w-7xl px-6 py-12">
+      <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {products.map((p) => (
-          <article key={p.name} className="group flex flex-col rounded-2xl border border-border bg-card p-4 transition hover:border-primary hover:shadow-soft">
-            <div className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-primary-soft to-surface">
-              <Pill className="h-14 w-14 text-primary/70 transition group-hover:scale-110" />
+          <article key={p.name} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
+            <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
+              <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
               {p.badge && (
-                <span className="absolute left-2 top-2 rounded-full bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary shadow-soft">
+                <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-soft backdrop-blur">
                   {p.badge}
                 </span>
               )}
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">{p.category}</p>
-            <h3 className="text-sm font-semibold leading-tight">{p.name}</h3>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-base font-bold">${p.price.toFixed(2)}</span>
-              <button className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground transition hover:opacity-90">
-                <Plus className="h-4 w-4" strokeWidth={3} />
-              </button>
+            <div className="mt-4 flex flex-1 flex-col">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
+              <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
+              <div className="mt-auto flex items-center justify-between pt-4">
+                <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
+                <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                  <Plus className="h-4 w-4" strokeWidth={3} />
+                </button>
+              </div>
             </div>
           </article>
         ))}
