@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useCallback } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search, Upload, ShieldCheck, Pill, HeartPulse, Bandage, Leaf, Baby,
   Stethoscope, ShoppingCart, Check, FileText, Truck, CreditCard,
-  Bell, Package, RefreshCw, Clock, ChevronRight, Plus, Minus, X, Lock,
+  Bell, Package, RefreshCw, Clock, ChevronRight, Plus, Minus, X, Lock, LogOut, User as UserIcon,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,30 +28,19 @@ const categories = [
   { name: "Cold & Flu", icon: Stethoscope, count: 41, tone: "from-cyan-50 to-teal-50" },
 ];
 
-const products = [
-  { name: "Paracetamol 500mg", category: "Pain Relief", price: 4.99, badge: "OTC" },
-  { name: "Aspirin 100mg", category: "Pain Relief", price: 5.49, badge: "OTC" },
-  { name: "Vitamin D3 1000 IU", category: "Vitamins", price: 12.5, badge: "Best Seller" },
-  { name: "Vitamin C 500mg", category: "Vitamins", price: 9.99, badge: "Popular" },
-  { name: "Sterile Bandages (24pk)", category: "First Aid", price: 6.75, badge: null },
-  { name: "Omega-3 Fish Oil", category: "Wellness", price: 18.99, badge: "New" },
-  { name: "Cough Syrup 200ml", category: "Cold & Flu", price: 8.4, badge: null },
-  { name: "Baby Gentle Lotion", category: "Baby Care", price: 9.2, badge: null },
-  { name: "Magnesium Complex", category: "Vitamins", price: 14.0, badge: null },
-  { name: "Antiseptic Spray", category: "First Aid", price: 5.5, badge: null },
-];
-
 const refills = [
   { name: "Metformin 500mg", due: "in 3 days", progress: 80 },
   { name: "Lisinopril 10mg", due: "in 9 days", progress: 45 },
   { name: "Atorvastatin 20mg", due: "in 18 days", progress: 20 },
 ];
 
-const orders = [
-  { id: "MP-10428", date: "Jun 24, 2026", items: 4, status: "Out for delivery", total: 42.18 },
-  { id: "MP-10391", date: "Jun 12, 2026", items: 2, status: "Delivered", total: 17.95 },
-  { id: "MP-10322", date: "May 30, 2026", items: 6, status: "Delivered", total: 88.4 },
-];
+type Product = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  badge: string | null;
+};
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,6 +73,14 @@ function Logo() {
 }
 
 function Header() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    queryClient.clear();
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
@@ -95,6 +95,22 @@ function Header() {
           <div className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary sm:flex">
             <ShieldCheck className="h-3.5 w-3.5" /> Licensed Pharmacy
           </div>
+          {user ? (
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+              title={user.email ?? undefined}
+            >
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+            >
+              <UserIcon className="h-3.5 w-3.5" /> Sign in
+            </Link>
+          )}
           <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-muted">
             <ShoppingCart className="h-4.5 w-4.5" />
             <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">3</span>
@@ -218,15 +234,72 @@ function HeroCard() {
   );
 }
 
+type PrescriptionRow = {
+  id: string;
+  file_name: string;
+  file_size: number | null;
+  status: string;
+  created_at: string;
+};
+
 function PrescriptionUpload() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [dragging, setDragging] = useState(false);
-  const [files, setFiles] = useState<{ name: string; size: number }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = useCallback((list: FileList | null) => {
-    if (!list) return;
-    setFiles((prev) => [...prev, ...Array.from(list).map((f) => ({ name: f.name, size: f.size }))]);
-  }, []);
+  const { data: files = [] } = useQuery({
+    queryKey: ["prescriptions", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select("id, file_name, file_size, status, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as PrescriptionRow[];
+    },
+  });
+
+  const addFiles = useCallback(async (list: FileList | null) => {
+    if (!list || !user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const file of Array.from(list)) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from("prescriptions").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+        const { error: dbErr } = await supabase.from("prescriptions").insert({
+          user_id: user.id,
+          file_path: path,
+          file_name: file.name,
+          file_size: file.size,
+          mime_type: file.type,
+        });
+        if (dbErr) throw dbErr;
+      }
+      queryClient.invalidateQueries({ queryKey: ["prescriptions", user.id] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [user, queryClient]);
+
+  async function removeFile(row: PrescriptionRow) {
+    if (!user) return;
+    const { data: rec } = await supabase.from("prescriptions").select("file_path").eq("id", row.id).maybeSingle();
+    if (rec?.file_path) await supabase.storage.from("prescriptions").remove([rec.file_path]);
+    await supabase.from("prescriptions").delete().eq("id", row.id);
+    queryClient.invalidateQueries({ queryKey: ["prescriptions", user.id] });
+  }
 
   return (
     <section id="prescription" className="mx-auto max-w-7xl px-6 py-16">
@@ -258,44 +331,67 @@ function PrescriptionUpload() {
         </div>
 
         <div>
-          <label
-            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-            className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${
-              dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50"
-            }`}
-          >
-            <input ref={inputRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
-              <Upload className="h-6 w-6" />
+          {!user ? (
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface p-8 text-center">
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+                <Lock className="h-6 w-6" />
+              </div>
+              <p className="mt-4 text-base font-semibold">Sign in to upload securely</p>
+              <p className="mt-1 text-sm text-muted-foreground">Your prescriptions are stored in your private, encrypted profile.</p>
+              <button
+                onClick={() => navigate({ to: "/auth" })}
+                className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+              >
+                Sign in to continue
+              </button>
             </div>
-            <p className="mt-4 text-base font-semibold">Drop your prescription here</p>
-            <p className="mt-1 text-sm text-muted-foreground">PNG, JPG or PDF · up to 10MB</p>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background"
-            >
-              Browse files
-            </button>
-          </label>
+          ) : (
+            <>
+              <label
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${
+                  dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50"
+                }`}
+              >
+                <input ref={inputRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+                  <Upload className="h-6 w-6" />
+                </div>
+                <p className="mt-4 text-base font-semibold">{busy ? "Uploading…" : "Drop your prescription here"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">PNG, JPG or PDF · up to 10MB</p>
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={busy}
+                  className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:opacity-60"
+                >
+                  Browse files
+                </button>
+              </label>
 
-          {files.length > 0 && (
-            <ul className="mt-4 space-y-2">
-              {files.map((f, i) => (
-                <li key={i} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{f.name}</span>
-                    <span className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</span>
-                  </div>
-                  <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
-                    <X className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+              {error && <div className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>}
+
+              {files.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {files.map((f) => (
+                    <li key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{f.file_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB · ` : ""}{f.status}
+                        </span>
+                      </div>
+                      <button onClick={() => removeFile(f)} className="text-muted-foreground hover:text-destructive">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -332,6 +428,18 @@ function Categories() {
 }
 
 function ProductGrid({ searchQuery }: { searchQuery: string }) {
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("id, name, category, price, badge")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []).map((p) => ({ ...p, price: Number(p.price) })) as Product[];
+    },
+  });
+
   const query = searchQuery.trim().toLowerCase();
   const filtered = products.filter((p) =>
     !query ||
@@ -344,39 +452,39 @@ function ProductGrid({ searchQuery }: { searchQuery: string }) {
       {query && (
         <div className="mb-4 text-sm text-muted-foreground">
           {filtered.length === 0 ? (
-            <span>
-              No results for "<span className="font-medium text-foreground">{searchQuery}</span>".
-            </span>
+            <span>No results for "<span className="font-medium text-foreground">{searchQuery}</span>".</span>
           ) : (
-            <span>
-              {filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"
-            </span>
+            <span>{filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"</span>
           )}
         </div>
       )}
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-        {filtered.map((p) => (
-          <article key={p.name} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
-            <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
-              <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
-              {p.badge && (
-                <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-soft backdrop-blur">
-                  {p.badge}
-                </span>
-              )}
-            </div>
-            <div className="mt-4 flex flex-1 flex-col">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
-              <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
-              <div className="mt-auto flex items-center justify-between pt-4">
-                <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
-                <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90">
-                  <Plus className="h-4 w-4" strokeWidth={3} />
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-72 animate-pulse rounded-3xl border border-border bg-card" />
+            ))
+          : filtered.map((p) => (
+              <article key={p.id} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
+                <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
+                  <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
+                  {p.badge && (
+                    <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-soft backdrop-blur">
+                      {p.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4 flex flex-1 flex-col">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
+                  <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
+                  <div className="mt-auto flex items-center justify-between pt-4">
+                    <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
+                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                      <Plus className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
       </div>
     </section>
   );
@@ -390,8 +498,37 @@ const steps = [
 ];
 
 function Checkout() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [qty, setQty] = useState(2);
+  const [placing, setPlacing] = useState(false);
+
+  const subtotal = 12.5 * qty + 6.75;
+  const total = subtotal + 2.10;
+
+  async function nextStep() {
+    if (step === 3 && user) {
+      setPlacing(true);
+      try {
+        const items = [
+          { name: "Vitamin D3 1000 IU", price: 12.5, qty },
+          { name: "Sterile Bandages (24pk)", price: 6.75, qty: 1 },
+        ];
+        await supabase.from("orders").insert({
+          user_id: user.id,
+          items,
+          item_count: qty + 1,
+          total,
+          status: "Processing",
+        });
+        queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+      } finally {
+        setPlacing(false);
+      }
+    }
+    setStep(step === 4 ? 1 : step + 1);
+  }
 
   return (
     <section id="checkout" className="mx-auto max-w-7xl px-6 py-16">
@@ -404,7 +541,6 @@ function Checkout() {
       </div>
 
       <div className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
-        {/* Steps */}
         <div className="grid grid-cols-4 border-b border-border bg-surface">
           {steps.map((s) => {
             const active = step === s.id;
@@ -481,6 +617,11 @@ function Checkout() {
             {step === 3 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-bold">Payment method</h3>
+                {!user && (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <Link to="/auth" className="font-semibold underline">Sign in</Link> to save this order to your account.
+                  </div>
+                )}
                 <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -508,24 +649,25 @@ function Checkout() {
                 </div>
                 <h3 className="mt-4 text-xl font-bold">Order confirmed</h3>
                 <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-                  We've sent a receipt to your email. Order <span className="font-semibold text-foreground">#MP-10429</span> ships tomorrow.
+                  {user
+                    ? "We've saved this order to your dashboard and emailed your receipt."
+                    : "Your order was simulated. Sign in next time to save it to your account."}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Summary */}
           <aside className="rounded-2xl border border-border bg-surface p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
-              <Row label="Subtotal" value={`$${(12.5 * qty + 6.75).toFixed(2)}`} />
+              <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
               <Row label="Delivery" value="Free" />
               <Row label="Tax" value="$2.10" />
             </dl>
             <div className="my-4 border-t border-border" />
             <div className="flex items-center justify-between">
               <span className="font-bold">Total</span>
-              <span className="text-2xl font-extrabold">${(12.5 * qty + 6.75 + 2.10).toFixed(2)}</span>
+              <span className="text-2xl font-extrabold">${total.toFixed(2)}</span>
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
@@ -534,10 +676,11 @@ function Checkout() {
                 </button>
               )}
               <button
-                onClick={() => setStep(step === 4 ? 1 : step + 1)}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+                onClick={nextStep}
+                disabled={placing}
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
               >
-                {step === 4 ? "Start over" : step === 3 ? "Place order" : "Continue"}
+                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : "Continue"}
               </button>
             </div>
           </aside>
@@ -568,7 +711,56 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+type ProfileRow = {
+  full_name: string | null;
+};
+
+type OrderRow = {
+  id: string;
+  order_number: string;
+  item_count: number;
+  total: number;
+  status: string;
+  created_at: string;
+};
+
 function Dashboard() {
+  const { user, loading } = useAuth();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as ProfileRow | null;
+    },
+  });
+
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ["orders", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, order_number, item_count, total, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return (data ?? []).map((o) => ({ ...o, total: Number(o.total) })) as OrderRow[];
+    },
+  });
+
+  const displayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    "there";
+
   return (
     <section id="dashboard" className="mx-auto max-w-7xl px-6 py-16">
       <div className="flex items-end justify-between">
@@ -576,67 +768,96 @@ function Dashboard() {
           <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
             Member dashboard
           </div>
-          <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">Welcome back, Jane</h2>
-          <p className="mt-2 text-muted-foreground">Track recent orders and stay ahead of your refills.</p>
+          <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">
+            {user ? `Welcome back, ${displayName}` : "Your dashboard awaits"}
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            {user ? "Track recent orders and stay ahead of your refills." : "Sign in to see your orders and refill reminders."}
+          </p>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        {/* Orders */}
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold">Recent orders</h3>
-            <a href="#" className="text-sm font-semibold text-primary">See all</a>
+      {!user && !loading ? (
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border bg-card p-12 text-center shadow-soft">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+            <UserIcon className="h-6 w-6" />
           </div>
-          <div className="mt-5 divide-y divide-border">
-            {orders.map((o) => (
-              <div key={o.id} className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
-                    <Package className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">{o.id}</p>
-                    <p className="text-xs text-muted-foreground">{o.date} · {o.items} items</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">${o.total.toFixed(2)}</p>
-                  <span className={`text-xs font-semibold ${o.status === "Delivered" ? "text-success" : "text-primary"}`}>
-                    {o.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Create a free M-Pharmacy account to upload prescriptions, view orders, and get refill reminders.
+          </p>
+          <Link
+            to="/auth"
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+          >
+            Sign in or create account
+          </Link>
         </div>
+      ) : (
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Recent orders</h3>
+              <a href="#" className="text-sm font-semibold text-primary">See all</a>
+            </div>
+            <div className="mt-5 divide-y divide-border">
+              {ordersLoading ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">Loading orders…</p>
+              ) : orders.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No orders yet. Complete the checkout simulator above to log your first order.
+                </p>
+              ) : (
+                orders.map((o) => (
+                  <div key={o.id} className="flex items-center justify-between py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
+                        <Package className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{o.order_number}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(o.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · {o.item_count} items
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">${o.total.toFixed(2)}</p>
+                      <span className={`text-xs font-semibold ${o.status === "Delivered" ? "text-success" : "text-primary"}`}>
+                        {o.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-        {/* Refills */}
-        <div className="rounded-3xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-soft">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold">Refill reminders</h3>
-            <Bell className="h-5 w-5 text-primary" />
-          </div>
-          <div className="mt-5 space-y-4">
-            {refills.map((r) => (
-              <div key={r.name} className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">{r.name}</p>
-                    <p className="text-xs text-muted-foreground">Refill due {r.due}</p>
+          <div className="rounded-3xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-soft">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Refill reminders</h3>
+              <Bell className="h-5 w-5 text-primary" />
+            </div>
+            <div className="mt-5 space-y-4">
+              {refills.map((r) => (
+                <div key={r.name} className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">Refill due {r.due}</p>
+                    </div>
+                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${r.progress}%` }} />
+                  </div>
                 </div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${r.progress}%` }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
