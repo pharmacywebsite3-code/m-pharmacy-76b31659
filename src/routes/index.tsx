@@ -115,7 +115,7 @@ function Logo() {
   );
 }
 
-function Header() {
+function Header({ cartCount = 0 }: { cartCount?: number }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
