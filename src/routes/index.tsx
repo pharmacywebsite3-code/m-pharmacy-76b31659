@@ -52,17 +52,50 @@ type Product = {
   badge: string | null;
 };
 
+export type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+};
+
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
+    setCart((prev) => {
+      const found = prev.find((i) => i.id === p.id);
+      if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
+      return [...prev, { id: p.id, name: p.name, price: p.price, qty: 1 }];
+    });
+    // smooth scroll to checkout
+    if (typeof document !== "undefined") {
+      const el = document.getElementById("checkout");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
+  const updateQty = useCallback((id: string, qty: number) => {
+    setCart((prev) =>
+      qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => (i.id === id ? { ...i, qty } : i)),
+    );
+  }, []);
+
+  const removeItem = useCallback((id: string) => {
+    setCart((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
+      <Header cartCount={cartCount} />
       <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
       <Categories />
-      <ProductGrid searchQuery={searchQuery} />
-      <Checkout />
+      <ProductGrid searchQuery={searchQuery} onAdd={addToCart} />
+      <Checkout cart={cart} updateQty={updateQty} removeItem={removeItem} />
       <Dashboard />
       <Footer />
     </div>
@@ -82,7 +115,7 @@ function Logo() {
   );
 }
 
-function Header() {
+function Header({ cartCount = 0 }: { cartCount?: number }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -123,7 +156,9 @@ function Header() {
           )}
           <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-muted">
             <ShoppingCart className="h-4.5 w-4.5" />
-            <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">3</span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
+            )}
           </button>
         </div>
       </div>
@@ -463,7 +498,7 @@ function Categories() {
   );
 }
 
-function ProductGrid({ searchQuery }: { searchQuery: string }) {
+function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: { id: string; name: string; price: number }) => void }) {
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ["medications", "external"],
@@ -519,10 +554,15 @@ function ProductGrid({ searchQuery }: { searchQuery: string }) {
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
-                  <div className="mt-auto flex items-center justify-between pt-4">
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                     <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
-                    <button disabled={!p.inStock} className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40">
-                      <Plus className="h-4 w-4" strokeWidth={3} />
+                    <button
+                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.price })}
+                      disabled={!p.inStock}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
+                    >
+                      <Plus className="h-3.5 w-3.5" strokeWidth={3} />
+                      Add to Cart
                     </button>
                   </div>
                 </div>
@@ -541,28 +581,34 @@ const steps = [
   { id: 4, title: "Confirm", icon: Check },
 ];
 
-function Checkout() {
+function Checkout({
+  cart,
+  updateQty,
+  removeItem,
+}: {
+  cart: CartItem[];
+  updateQty: (id: string, qty: number) => void;
+  removeItem: (id: string) => void;
+}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
-  const [qty, setQty] = useState(2);
   const [placing, setPlacing] = useState(false);
 
-  const subtotal = 12.5 * qty + 6.75;
-  const total = subtotal + 2.10;
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = +(subtotal * 0.08).toFixed(2);
+  const itemCount = cart.reduce((s, i) => s + i.qty, 0);
+  const total = +(subtotal + tax).toFixed(2);
 
   async function nextStep() {
+    if (cart.length === 0) return;
     if (step === 3 && user) {
       setPlacing(true);
       try {
-        const items = [
-          { name: "Vitamin D3 1000 IU", price: 12.5, qty },
-          { name: "Sterile Bandages (24pk)", price: 6.75, qty: 1 },
-        ];
         await supabase.from("orders").insert({
           user_id: user.id,
-          items,
-          item_count: qty + 1,
+          items: cart.map((i) => ({ name: i.name, price: i.price, qty: i.qty })),
+          item_count: itemCount,
           total,
           status: "Processing",
         });
@@ -612,32 +658,41 @@ function Checkout() {
           <div className="min-h-[280px]">
             {step === 1 && (
               <div className="space-y-3">
-                <h3 className="text-lg font-bold">Your cart</h3>
-                {[
-                  { name: "Vitamin D3 1000 IU", price: 12.5 },
-                  { name: "Sterile Bandages (24pk)", price: 6.75 },
-                ].map((i, idx) => (
-                  <div key={i.name} className="flex items-center justify-between rounded-xl border border-border p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
-                        <Pill className="h-5 w-5" />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold">Your cart</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {itemCount} item{itemCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {cart.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                    Your cart is empty. Tap <span className="font-semibold text-foreground">“Add to Cart”</span> on any product above to get started.
+                  </div>
+                ) : (
+                  cart.map((i) => (
+                    <div key={i.id} className="flex items-center justify-between rounded-xl border border-border p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
+                          <Pill className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{i.name}</p>
+                          <p className="text-xs text-muted-foreground">${i.price.toFixed(2)} each</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold">{i.name}</p>
-                        <p className="text-xs text-muted-foreground">${i.price.toFixed(2)}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 rounded-lg border border-border">
+                          <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center"><Minus className="h-3.5 w-3.5" /></button>
+                          <span className="w-6 text-center text-sm font-semibold">{i.qty}</span>
+                          <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center"><Plus className="h-3.5 w-3.5" /></button>
+                        </div>
+                        <button onClick={() => removeItem(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Remove">
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
-                    {idx === 0 ? (
-                      <div className="flex items-center gap-2 rounded-lg border border-border">
-                        <button onClick={() => setQty(Math.max(1, qty - 1))} className="grid h-8 w-8 place-items-center"><Minus className="h-3.5 w-3.5" /></button>
-                        <span className="w-6 text-center text-sm font-semibold">{qty}</span>
-                        <button onClick={() => setQty(qty + 1)} className="grid h-8 w-8 place-items-center"><Plus className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-semibold">×1</span>
-                    )}
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
@@ -704,9 +759,10 @@ function Checkout() {
           <aside className="rounded-2xl border border-border bg-surface p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
+              <Row label={`Items (${itemCount})`} value={`$${subtotal.toFixed(2)}`} />
               <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Delivery" value="Free" />
-              <Row label="Tax" value="$2.10" />
+              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : "$4.99"} />
+              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
             </dl>
             <div className="my-4 border-t border-border" />
             <div className="flex items-center justify-between">
@@ -721,10 +777,10 @@ function Checkout() {
               )}
               <button
                 onClick={nextStep}
-                disabled={placing}
+                disabled={placing || (step < 4 && cart.length === 0)}
                 className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
               >
-                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : "Continue"}
+                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
               </button>
             </div>
           </aside>
