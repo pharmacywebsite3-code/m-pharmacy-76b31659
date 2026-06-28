@@ -581,28 +581,34 @@ const steps = [
   { id: 4, title: "Confirm", icon: Check },
 ];
 
-function Checkout() {
+function Checkout({
+  cart,
+  updateQty,
+  removeItem,
+}: {
+  cart: CartItem[];
+  updateQty: (id: string, qty: number) => void;
+  removeItem: (id: string) => void;
+}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
-  const [qty, setQty] = useState(2);
   const [placing, setPlacing] = useState(false);
 
-  const subtotal = 12.5 * qty + 6.75;
-  const total = subtotal + 2.10;
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = +(subtotal * 0.08).toFixed(2);
+  const itemCount = cart.reduce((s, i) => s + i.qty, 0);
+  const total = +(subtotal + tax).toFixed(2);
 
   async function nextStep() {
+    if (cart.length === 0) return;
     if (step === 3 && user) {
       setPlacing(true);
       try {
-        const items = [
-          { name: "Vitamin D3 1000 IU", price: 12.5, qty },
-          { name: "Sterile Bandages (24pk)", price: 6.75, qty: 1 },
-        ];
         await supabase.from("orders").insert({
           user_id: user.id,
-          items,
-          item_count: qty + 1,
+          items: cart.map((i) => ({ name: i.name, price: i.price, qty: i.qty })),
+          item_count: itemCount,
           total,
           status: "Processing",
         });
