@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Search, Upload, ShieldCheck, Pill, HeartPulse, Bandage, Leaf, Baby,
   Stethoscope, ShoppingCart, Check, FileText, Truck, CreditCard,
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { fetchMedications, type ExternalMedication } from "@/lib/medications.functions";
 import {
   Dialog,
   DialogContent,
