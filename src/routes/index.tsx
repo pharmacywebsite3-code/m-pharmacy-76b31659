@@ -8,6 +8,14 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -249,7 +257,9 @@ function PrescriptionUpload() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
 
   const { data: files = [] } = useQuery({
     queryKey: ["prescriptions", user?.id],
@@ -286,12 +296,14 @@ function PrescriptionUpload() {
         if (dbErr) throw dbErr;
       }
       queryClient.invalidateQueries({ queryKey: ["prescriptions", user.id] });
+      setShowSuccessModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
     }
   }, [user, queryClient]);
+
 
   async function removeFile(row: PrescriptionRow) {
     if (!user) return;
@@ -395,6 +407,28 @@ function PrescriptionUpload() {
           )}
         </div>
       </div>
+
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:rounded-2xl">
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
+              <Check className="h-7 w-7" strokeWidth={3} />
+            </div>
+            <DialogTitle className="mt-4 text-xl font-semibold">Prescription received</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Our pharmacist will review it shortly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-center">
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Got it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
