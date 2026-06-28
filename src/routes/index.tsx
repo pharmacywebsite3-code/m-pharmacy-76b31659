@@ -759,9 +759,10 @@ function Checkout({
           <aside className="rounded-2xl border border-border bg-surface p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
+              <Row label={`Items (${itemCount})`} value={`$${subtotal.toFixed(2)}`} />
               <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Delivery" value="Free" />
-              <Row label="Tax" value="$2.10" />
+              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : "$4.99"} />
+              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
             </dl>
             <div className="my-4 border-t border-border" />
             <div className="flex items-center justify-between">
@@ -776,10 +777,10 @@ function Checkout({
               )}
               <button
                 onClick={nextStep}
-                disabled={placing}
+                disabled={placing || (step < 4 && cart.length === 0)}
                 className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
               >
-                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : "Continue"}
+                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
               </button>
             </div>
           </aside>
