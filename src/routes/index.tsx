@@ -464,16 +464,11 @@ function Categories() {
 }
 
 function ProductGrid({ searchQuery }: { searchQuery: string }) {
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ["inventory"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("id, name, category, price, badge")
-        .order("name");
-      if (error) throw error;
-      return (data ?? []).map((p) => ({ ...p, price: Number(p.price) })) as Product[];
-    },
+  const loadMedications = useServerFn(fetchMedications);
+  const { data: products = [], isLoading, isFetching } = useQuery({
+    queryKey: ["medications", "external"],
+    queryFn: () => loadMedications({ data: {} }) as Promise<ExternalMedication[]>,
+    staleTime: 60_000,
   });
 
   const query = searchQuery.trim().toLowerCase();
@@ -485,15 +480,22 @@ function ProductGrid({ searchQuery }: { searchQuery: string }) {
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
-      {query && (
-        <div className="mb-4 text-sm text-muted-foreground">
-          {filtered.length === 0 ? (
-            <span>No results for "<span className="font-medium text-foreground">{searchQuery}</span>".</span>
+      <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div>
+          {query ? (
+            filtered.length === 0 ? (
+              <span>No results for "<span className="font-medium text-foreground">{searchQuery}</span>".</span>
+            ) : (
+              <span>{filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"</span>
+            )
           ) : (
-            <span>{filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"</span>
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
+              {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
+            </span>
           )}
         </div>
-      )}
+      </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
@@ -508,13 +510,18 @@ function ProductGrid({ searchQuery }: { searchQuery: string }) {
                       {p.badge}
                     </span>
                   )}
+                  <span className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur ${
+                    p.inStock ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                  }`}>
+                    {p.inStock ? `${p.stockCount} in stock` : "Out of stock"}
+                  </span>
                 </div>
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
                   <div className="mt-auto flex items-center justify-between pt-4">
                     <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
-                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                    <button disabled={!p.inStock} className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40">
                       <Plus className="h-4 w-4" strokeWidth={3} />
                     </button>
                   </div>
@@ -525,6 +532,7 @@ function ProductGrid({ searchQuery }: { searchQuery: string }) {
     </section>
   );
 }
+
 
 const steps = [
   { id: 1, title: "Cart", icon: ShoppingCart },
