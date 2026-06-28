@@ -156,7 +156,9 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
           )}
           <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-muted">
             <ShoppingCart className="h-4.5 w-4.5" />
-            <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">3</span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
+            )}
           </button>
         </div>
       </div>
