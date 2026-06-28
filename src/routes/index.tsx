@@ -8,6 +8,14 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -249,7 +257,9 @@ function PrescriptionUpload() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
 
   const { data: files = [] } = useQuery({
     queryKey: ["prescriptions", user?.id],
@@ -286,12 +296,14 @@ function PrescriptionUpload() {
         if (dbErr) throw dbErr;
       }
       queryClient.invalidateQueries({ queryKey: ["prescriptions", user.id] });
+      setShowSuccessModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
     }
   }, [user, queryClient]);
+
 
   async function removeFile(row: PrescriptionRow) {
     if (!user) return;
