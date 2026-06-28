@@ -52,17 +52,50 @@ type Product = {
   badge: string | null;
 };
 
+export type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+};
+
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
+    setCart((prev) => {
+      const found = prev.find((i) => i.id === p.id);
+      if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
+      return [...prev, { id: p.id, name: p.name, price: p.price, qty: 1 }];
+    });
+    // smooth scroll to checkout
+    if (typeof document !== "undefined") {
+      const el = document.getElementById("checkout");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
+  const updateQty = useCallback((id: string, qty: number) => {
+    setCart((prev) =>
+      qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => (i.id === id ? { ...i, qty } : i)),
+    );
+  }, []);
+
+  const removeItem = useCallback((id: string) => {
+    setCart((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
+      <Header cartCount={cartCount} />
       <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
       <Categories />
-      <ProductGrid searchQuery={searchQuery} />
-      <Checkout />
+      <ProductGrid searchQuery={searchQuery} onAdd={addToCart} />
+      <Checkout cart={cart} updateQty={updateQty} removeItem={removeItem} />
       <Dashboard />
       <Footer />
     </div>
