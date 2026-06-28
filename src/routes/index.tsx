@@ -498,7 +498,7 @@ function Categories() {
   );
 }
 
-function ProductGrid({ searchQuery }: { searchQuery: string }) {
+function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: { id: string; name: string; price: number }) => void }) {
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ["medications", "external"],
