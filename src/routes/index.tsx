@@ -407,6 +407,28 @@ function PrescriptionUpload() {
           )}
         </div>
       </div>
+
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:rounded-2xl">
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
+              <Check className="h-7 w-7" strokeWidth={3} />
+            </div>
+            <DialogTitle className="mt-4 text-xl font-semibold">Prescription received</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Our pharmacist will review it shortly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-center">
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Got it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
