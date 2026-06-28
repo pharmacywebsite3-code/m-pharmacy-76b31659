@@ -87,8 +87,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "M-Pharmacy — Trusted Online Pharmacy & Prescription Refills" },
       { name: "twitter:description", content: "Order medications, upload prescriptions, and manage refills with M-Pharmacy — a secure, licensed online pharmacy." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f3af1946-3ace-46eb-a503-a9b0aff06ec4" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f3af1946-3ace-46eb-a503-a9b0aff06ec4" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5fa28680-7023-41b6-8ee7-9d12a7372e80" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/5fa28680-7023-41b6-8ee7-9d12a7372e80" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
