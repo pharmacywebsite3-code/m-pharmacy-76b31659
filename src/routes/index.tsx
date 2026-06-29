@@ -9,7 +9,11 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchMedications, type ExternalMedication } from "@/lib/medications.functions";
+import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
+
+const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
+const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
+const fmtDual = (usd: number) => `${fmtUSD(usd)} / ${fmtETB(usd)}`;
 import {
   Dialog,
   DialogContent,
