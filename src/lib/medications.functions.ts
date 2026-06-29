@@ -16,13 +16,17 @@ import { createServerFn } from "@tanstack/react-start";
  * service shape without exposing any secrets to the browser.
  */
 
+// Mock FX rate. In production this would come from a live FX feed.
+export const ETB_PER_USD = 120;
+
 export type ExternalMedication = {
   id: string;
   sku: string;
   name: string;
   category: string;
-  price: number;
-  currency: "USD";
+  amountUSD: number;
+  amountETB: number;
+  fxRate: number;
   inStock: boolean;
   stockCount: number;
   badge: string | null;
@@ -30,7 +34,7 @@ export type ExternalMedication = {
   updatedAt: string;
 };
 
-const CATALOG: Omit<ExternalMedication, "price" | "inStock" | "stockCount" | "updatedAt" | "currency">[] = [
+const CATALOG: Omit<ExternalMedication, "amountUSD" | "amountETB" | "fxRate" | "inStock" | "stockCount" | "updatedAt">[] = [
   { id: "med-001", sku: "RX-PARA-500", name: "Paracetamol 500mg", category: "Pain Relief", badge: "OTC", manufacturer: "Acme Labs" },
   { id: "med-002", sku: "RX-ASPI-100", name: "Aspirin 100mg", category: "Pain Relief", badge: "OTC", manufacturer: "Bayer" },
   { id: "med-003", sku: "RX-VTD3-1K", name: "Vitamin D3 1000 IU", category: "Vitamins", badge: "Best Seller", manufacturer: "NaturePharm" },
@@ -74,12 +78,14 @@ export const fetchMedications = createServerFn({ method: "GET" })
 
     let results: ExternalMedication[] = CATALOG.map((item) => {
       const base = BASE_PRICES[item.id] ?? 9.99;
-      const price = Math.max(0.5, +(base + jitter(item.id + dayKey, 0.4)).toFixed(2));
+      const amountUSD = Math.max(0.5, +(base + jitter(item.id + dayKey, 0.4)).toFixed(2));
+      const amountETB = +(amountUSD * ETB_PER_USD).toFixed(2);
       const stockCount = Math.floor(20 + (jitter(item.sku + dayKey, 80) + 80));
       return {
         ...item,
-        currency: "USD",
-        price,
+        amountUSD,
+        amountETB,
+        fxRate: ETB_PER_USD,
         stockCount,
         inStock: stockCount > 0,
         updatedAt: stamp,
