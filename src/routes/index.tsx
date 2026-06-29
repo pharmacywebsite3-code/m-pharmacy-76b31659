@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PharmacistAssistant } from "@/components/PharmacistAssistant";
 
 
 export const Route = createFileRoute("/")({
@@ -98,6 +99,7 @@ function Home() {
       <Checkout cart={cart} updateQty={updateQty} removeItem={removeItem} />
       <Dashboard />
       <Footer />
+      <PharmacistAssistant />
     </div>
   );
 }
