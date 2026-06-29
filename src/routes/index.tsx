@@ -771,15 +771,18 @@ function Checkout({
           <aside className="rounded-2xl border border-border bg-surface p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
-              <Row label={`Items (${itemCount})`} value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : "$4.99"} />
-              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
+              <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
+              <Row label="Subtotal" value={fmtDual(subtotal)} />
+              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : fmtDual(4.99)} />
+              <Row label="Tax (8%)" value={fmtDual(tax)} />
             </dl>
             <div className="my-4 border-t border-border" />
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <span className="font-bold">Total</span>
-              <span className="text-2xl font-extrabold">${total.toFixed(2)}</span>
+              <div className="text-right">
+                <div className="text-2xl font-extrabold leading-none">{fmtUSD(total)}</div>
+                <div className="mt-1 text-xs font-semibold text-muted-foreground">{fmtETB(total)}</div>
+              </div>
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
