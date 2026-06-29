@@ -255,8 +255,8 @@ function HeroCard() {
 
         <div className="mt-5 space-y-3">
           {[
-            { name: "Amoxicillin 500mg", qty: "30 capsules", price: "$14.20" },
-            { name: "Ibuprofen 200mg", qty: "60 tablets", price: "$6.80" },
+            { name: "Amoxicillin 500mg", qty: "30 capsules", usd: 14.20 },
+            { name: "Ibuprofen 200mg", qty: "60 tablets", usd: 6.80 },
           ].map((m) => (
             <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3">
               <div className="flex items-center gap-3">
@@ -268,7 +268,10 @@ function HeroCard() {
                   <p className="text-xs text-muted-foreground">{m.qty}</p>
                 </div>
               </div>
-              <span className="text-sm font-semibold">{m.price}</span>
+              <div className="text-right">
+                <p className="text-sm font-semibold">{fmtUSD(m.usd)}</p>
+                <p className="text-[10px] text-muted-foreground">{fmtETB(m.usd)}</p>
+              </div>
             </div>
           ))}
         </div>
