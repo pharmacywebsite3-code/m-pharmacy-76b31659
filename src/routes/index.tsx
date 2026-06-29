@@ -9,7 +9,11 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchMedications, type ExternalMedication } from "@/lib/medications.functions";
+import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
+
+const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
+const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
+const fmtDual = (usd: number) => `${fmtUSD(usd)} / ${fmtETB(usd)}`;
 import {
   Dialog,
   DialogContent,
@@ -251,8 +255,8 @@ function HeroCard() {
 
         <div className="mt-5 space-y-3">
           {[
-            { name: "Amoxicillin 500mg", qty: "30 capsules", price: "$14.20" },
-            { name: "Ibuprofen 200mg", qty: "60 tablets", price: "$6.80" },
+            { name: "Amoxicillin 500mg", qty: "30 capsules", usd: 14.20 },
+            { name: "Ibuprofen 200mg", qty: "60 tablets", usd: 6.80 },
           ].map((m) => (
             <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3">
               <div className="flex items-center gap-3">
@@ -264,7 +268,10 @@ function HeroCard() {
                   <p className="text-xs text-muted-foreground">{m.qty}</p>
                 </div>
               </div>
-              <span className="text-sm font-semibold">{m.price}</span>
+              <div className="text-right">
+                <p className="text-sm font-semibold">{fmtUSD(m.usd)}</p>
+                <p className="text-[10px] text-muted-foreground">{fmtETB(m.usd)}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -556,12 +563,15 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                    <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
+                  <div className="mt-auto pt-4">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-lg font-bold tracking-tight">{fmtUSD(p.amountUSD)}</span>
+                      <span className="text-xs font-semibold text-muted-foreground">/ {fmtETB(p.amountUSD)}</span>
+                    </div>
                     <button
-                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.price })}
+                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.amountUSD })}
                       disabled={!p.inStock}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={3} />
                       Add to Cart
@@ -679,7 +689,7 @@ function Checkout({
                         </div>
                         <div>
                           <p className="font-semibold">{i.name}</p>
-                          <p className="text-xs text-muted-foreground">${i.price.toFixed(2)} each</p>
+                          <p className="text-xs text-muted-foreground">{fmtDual(i.price)} each</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -761,15 +771,18 @@ function Checkout({
           <aside className="rounded-2xl border border-border bg-surface p-6">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
-              <Row label={`Items (${itemCount})`} value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : "$4.99"} />
-              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
+              <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
+              <Row label="Subtotal" value={fmtDual(subtotal)} />
+              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : fmtDual(4.99)} />
+              <Row label="Tax (8%)" value={fmtDual(tax)} />
             </dl>
             <div className="my-4 border-t border-border" />
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <span className="font-bold">Total</span>
-              <span className="text-2xl font-extrabold">${total.toFixed(2)}</span>
+              <div className="text-right">
+                <div className="text-2xl font-extrabold leading-none">{fmtUSD(total)}</div>
+                <div className="mt-1 text-xs font-semibold text-muted-foreground">{fmtETB(total)}</div>
+              </div>
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
@@ -923,7 +936,8 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">${o.total.toFixed(2)}</p>
+                      <p className="font-semibold">{fmtUSD(o.total)}</p>
+                      <p className="text-[10px] text-muted-foreground">{fmtETB(o.total)}</p>
                       <span className={`text-xs font-semibold ${o.status === "Delivered" ? "text-success" : "text-primary"}`}>
                         {o.status}
                       </span>
