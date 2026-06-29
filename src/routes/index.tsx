@@ -689,7 +689,7 @@ function Checkout({
                         </div>
                         <div>
                           <p className="font-semibold">{i.name}</p>
-                          <p className="text-xs text-muted-foreground">${i.price.toFixed(2)} each</p>
+                          <p className="text-xs text-muted-foreground">{fmtDual(i.price)} each</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
