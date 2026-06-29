@@ -560,12 +560,15 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                    <span className="text-lg font-bold tracking-tight">${p.price.toFixed(2)}</span>
+                  <div className="mt-auto pt-4">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-lg font-bold tracking-tight">{fmtUSD(p.amountUSD)}</span>
+                      <span className="text-xs font-semibold text-muted-foreground">/ {fmtETB(p.amountUSD)}</span>
+                    </div>
                     <button
-                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.price })}
+                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.amountUSD })}
                       disabled={!p.inStock}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={3} />
                       Add to Cart
