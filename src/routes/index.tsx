@@ -994,25 +994,25 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-soft">
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Refill reminders</h3>
-              <Bell className="h-5 w-5 text-primary" />
+              <Bell className="h-5 w-5 text-primary transition-transform duration-300 hover:scale-110" />
             </div>
             <div className="mt-5 space-y-4">
               {refills.map((r) => (
-                <div key={r.name} className="rounded-2xl border border-border bg-card p-4">
+                <div key={r.name} className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold">{r.name}</p>
                       <p className="text-xs text-muted-foreground">Refill due {r.due}</p>
                     </div>
-                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground transition-all duration-300 hover:scale-110 hover:bg-primary/90">
                       <RefreshCw className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${r.progress}%` }} />
+                    <div className="h-full rounded-full bg-primary transition-all duration-300 group-hover:bg-primary/90" style={{ width: `${r.progress}%` }} />
                   </div>
                 </div>
               ))}
