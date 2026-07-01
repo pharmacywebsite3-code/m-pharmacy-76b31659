@@ -368,7 +368,7 @@ function PrescriptionUpload() {
 
   return (
     <section id="prescription" className="mx-auto max-w-7xl px-6 py-16">
-      <div className="grid gap-8 rounded-3xl border border-border bg-card p-8 shadow-soft md:grid-cols-[1fr_1.1fr] md:p-12">
+      <div className="grid gap-8 rounded-2xl border border-border bg-card p-8 shadow-sm transition-all duration-300 hover:shadow-md md:grid-cols-[1fr_1.1fr] md:p-12">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
             <FileText className="h-3.5 w-3.5" /> Prescription Upload
@@ -397,7 +397,7 @@ function PrescriptionUpload() {
 
         <div>
           {!user ? (
-            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface p-8 text-center">
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface p-8 text-center transition-all duration-300 hover:border-primary/40">
               <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
                 <Lock className="h-6 w-6" />
               </div>
@@ -405,7 +405,7 @@ function PrescriptionUpload() {
               <p className="mt-1 text-sm text-muted-foreground">Your prescriptions are stored in your private, encrypted profile.</p>
               <button
                 onClick={() => navigate({ to: "/auth" })}
-                className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+                className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105"
               >
                 Sign in to continue
               </button>
@@ -416,12 +416,12 @@ function PrescriptionUpload() {
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${
-                  dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50"
+                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 ${
+                  dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50 hover:shadow-sm"
                 }`}
               >
                 <input ref={inputRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
                   <Upload className="h-6 w-6" />
                 </div>
                 <p className="mt-4 text-base font-semibold">{busy ? "Uploading…" : "Drop your prescription here"}</p>
@@ -430,7 +430,7 @@ function PrescriptionUpload() {
                   type="button"
                   onClick={() => inputRef.current?.click()}
                   disabled={busy}
-                  className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:opacity-60"
+                  className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-all duration-300 hover:scale-105 disabled:opacity-60"
                 >
                   Browse files
                 </button>
@@ -441,7 +441,7 @@ function PrescriptionUpload() {
               {files.length > 0 && (
                 <ul className="mt-4 space-y-2">
                   {files.map((f) => (
-                    <li key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm">
+                    <li key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm transition-all duration-300 hover:shadow-sm hover:border-primary/30">
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-primary" />
                         <span className="font-medium">{f.file_name}</span>
@@ -449,7 +449,7 @@ function PrescriptionUpload() {
                           {f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB · ` : ""}{f.status}
                         </span>
                       </div>
-                      <button onClick={() => removeFile(f)} className="text-muted-foreground hover:text-destructive">
+                      <button onClick={() => removeFile(f)} className="text-muted-foreground transition-colors duration-300 hover:text-destructive">
                         <X className="h-4 w-4" />
                       </button>
                     </li>
@@ -460,6 +460,7 @@ function PrescriptionUpload() {
           )}
         </div>
       </div>
+
 
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:rounded-2xl">
