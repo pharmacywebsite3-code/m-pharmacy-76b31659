@@ -244,8 +244,8 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
 function HeroCard() {
   return (
     <div className="relative">
-      <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 to-transparent blur-2xl" />
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-glow">
+      <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-success/15 to-transparent blur-2xl" />
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-success/10 text-success">
@@ -264,7 +264,7 @@ function HeroCard() {
             { name: "Amoxicillin 500mg", qty: "30 capsules", usd: 14.20 },
             { name: "Ibuprofen 200mg", qty: "60 tablets", usd: 6.80 },
           ].map((m) => (
-            <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3">
+            <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary-soft text-primary">
                   <Pill className="h-5 w-5" />
@@ -287,12 +287,13 @@ function HeroCard() {
             <p className="text-xs text-muted-foreground">Estimated delivery</p>
             <p className="text-sm font-semibold">Tomorrow, before 12pm</p>
           </div>
-          <button className="rounded-xl bg-foreground px-4 py-2 text-xs font-semibold text-background">Track order</button>
+          <button className="rounded-xl bg-foreground px-4 py-2 text-xs font-semibold text-background transition-all duration-300 hover:scale-105 hover:shadow-sm">Track order</button>
         </div>
       </div>
     </div>
   );
 }
+
 
 type PrescriptionRow = {
   id: string;
