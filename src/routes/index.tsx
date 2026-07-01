@@ -722,12 +722,13 @@ function Checkout({
                   </span>
                 </div>
                 {cart.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center text-sm text-muted-foreground transition-all duration-300 hover:border-primary/30 hover:bg-surface">
                     Your cart is empty. Tap <span className="font-semibold text-foreground">“Add to Cart”</span> on any product above to get started.
                   </div>
                 ) : (
                   cart.map((i) => (
-                    <div key={i.id} className="flex items-center justify-between rounded-xl border border-border p-4">
+                    <div key={i.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
+
                       <div className="flex items-center gap-3">
                         <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
                           <Pill className="h-5 w-5" />
