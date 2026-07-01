@@ -969,9 +969,9 @@ function Dashboard() {
                 </p>
               ) : (
                 orders.map((o) => (
-                  <div key={o.id} className="flex items-center justify-between py-4">
+                  <div key={o.id} className="group flex items-center justify-between rounded-xl py-3 px-3 transition-all duration-300 hover:bg-primary-soft/50 hover:-translate-x-1">
                     <div className="flex items-center gap-4">
-                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
+                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary transition-transform duration-300 group-hover:scale-110">
                         <Package className="h-5 w-5" />
                       </div>
                       <div>
