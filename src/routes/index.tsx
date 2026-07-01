@@ -139,10 +139,10 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <Logo />
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#shop" className="hover:text-foreground">Shop</a>
-          <a href="#prescription" className="hover:text-foreground">Prescriptions</a>
-          <a href="#checkout" className="hover:text-foreground">Checkout</a>
-          <a href="#dashboard" className="hover:text-foreground">My Account</a>
+          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">Shop</a>
+          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">Prescriptions</a>
+          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">Checkout</a>
+          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">My Account</a>
         </nav>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary sm:flex">
