@@ -764,7 +764,7 @@ function Checkout({
                   <Field label="City" placeholder="London" />
                   <Field label="Postal code" placeholder="NW1 6XE" />
                 </div>
-                <div className="rounded-xl border border-border bg-surface p-4 text-sm">
+                <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md">
                   <p className="font-semibold">Standard delivery</p>
                   <p className="text-xs text-muted-foreground">Arrives Wed, Jul 1 — Free over $35</p>
                 </div>
