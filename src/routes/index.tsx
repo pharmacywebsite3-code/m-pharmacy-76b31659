@@ -538,11 +538,19 @@ function Categories({
 }
 
 
-function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: { id: string; name: string; price: number }) => void }) {
+function ProductGrid({
+  searchQuery,
+  activeCategory,
+  onAdd,
+}: {
+  searchQuery: string;
+  activeCategory: string | null;
+  onAdd: (p: { id: string; name: string; price: number }) => void;
+}) {
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
-    queryKey: ["medications", "external"],
-    queryFn: () => loadMedications({ data: {} }) as Promise<ExternalMedication[]>,
+    queryKey: ["medications", "external", activeCategory ?? "all"],
+    queryFn: () => loadMedications({ data: { category: activeCategory ?? undefined } }) as Promise<ExternalMedication[]>,
     staleTime: 60_000,
   });
 
@@ -553,23 +561,21 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
     p.category.toLowerCase().includes(query)
   );
 
+  const heading = activeCategory ? `${activeCategory}` : "All medications";
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
-        <div>
-          {query ? (
-            filtered.length === 0 ? (
-              <span>No results for "<span className="font-medium text-foreground">{searchQuery}</span>".</span>
-            ) : (
-              <span>{filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"</span>
-            )
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
-              {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
+          <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground border border-border">
+            {filtered.length} product{filtered.length === 1 ? "" : "s"}
+          </span>
         </div>
+        <span className="inline-flex items-center gap-1.5 text-xs">
+          <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
+          {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {isLoading
@@ -615,6 +621,7 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
     </section>
   );
 }
+
 
 
 const steps = [
