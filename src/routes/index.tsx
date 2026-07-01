@@ -514,9 +514,9 @@ function Categories({
             <button
               key={c.name}
               onClick={() => onSelect(c.name === "All Products" ? null : c.name)}
-              className={`group relative rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-soft ${
+              className={`group relative rounded-xl border p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
                 isActive
-                  ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                  ? "border-primary bg-primary text-primary-foreground shadow-md animate-fade-in"
                   : "border-border bg-card hover:border-primary"
               }`}
               aria-pressed={isActive}
@@ -526,7 +526,7 @@ function Categories({
                   Active
                 </span>
               )}
-              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"}`}>
+              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"} transition-transform duration-300 group-hover:scale-110`}>
                 <c.icon className="h-6 w-6" />
               </div>
               <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
@@ -540,6 +540,7 @@ function Categories({
     </section>
   );
 }
+
 
 
 function ProductGrid({
