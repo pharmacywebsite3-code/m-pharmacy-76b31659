@@ -68,6 +68,7 @@ export type CartItem = {
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
@@ -100,8 +101,8 @@ function Home() {
       <Header cartCount={cartCount} />
       <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
-      <Categories />
-      <ProductGrid searchQuery={searchQuery} onAdd={addToCart} />
+      <Categories activeCategory={activeCategory} onSelect={setActiveCategory} />
+      <ProductGrid searchQuery={searchQuery} activeCategory={activeCategory} onAdd={addToCart} />
       <Checkout cart={cart} updateQty={updateQty} removeItem={removeItem} />
       <Dashboard />
       <Footer />
@@ -109,6 +110,7 @@ function Home() {
     </div>
   );
 }
+
 
 function Logo() {
   return (
