@@ -779,7 +779,7 @@ function Checkout({
                     <Link to="/auth" className="font-semibold underline">Sign in</Link> to save this order to your account.
                   </div>
                 )}
-                <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4">
+                <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-5 w-5 text-primary" />
