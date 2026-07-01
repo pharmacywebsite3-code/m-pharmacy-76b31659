@@ -476,7 +476,7 @@ function PrescriptionUpload() {
           <div className="mt-2 flex justify-center">
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
               Got it
             </button>
