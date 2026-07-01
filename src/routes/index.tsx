@@ -139,10 +139,10 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <Logo />
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#shop" className="hover:text-foreground">Shop</a>
-          <a href="#prescription" className="hover:text-foreground">Prescriptions</a>
-          <a href="#checkout" className="hover:text-foreground">Checkout</a>
-          <a href="#dashboard" className="hover:text-foreground">My Account</a>
+          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">Shop</a>
+          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">Prescriptions</a>
+          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">Checkout</a>
+          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">My Account</a>
         </nav>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary sm:flex">
@@ -151,7 +151,7 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
           {user ? (
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-all duration-300 hover:bg-muted hover:scale-105"
               title={user.email ?? undefined}
             >
               <LogOut className="h-3.5 w-3.5" /> Sign out
@@ -159,12 +159,12 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
           ) : (
             <Link
               to="/auth"
-              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
               <UserIcon className="h-3.5 w-3.5" /> Sign in
             </Link>
           )}
-          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-muted">
+          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105">
             <ShoppingCart className="h-4.5 w-4.5" />
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
@@ -179,12 +179,13 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
 function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-soft/60 via-background to-background" />
-      <div className="absolute right-0 top-0 -z-10 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-soft/90 via-background to-white" />
+      <div className="absolute -left-20 -top-20 -z-10 h-[600px] w-[600px] rounded-full bg-primary/15 blur-3xl" />
+      <div className="absolute right-0 bottom-0 -z-10 h-[500px] w-[500px] rounded-full bg-success/10 blur-3xl" />
       <div className="mx-auto max-w-7xl px-6 pb-16 pt-16 md:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card px-3 py-1 text-xs font-semibold text-primary shadow-soft">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
               <ShieldCheck className="h-3.5 w-3.5" /> HIPAA-compliant · Verified pharmacists
             </div>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
@@ -197,7 +198,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
 
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="mt-8 flex items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-soft"
+              className="mt-8 flex items-center gap-2 rounded-2xl border border-border bg-card/90 p-2 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
             >
               <div className="flex flex-1 items-center gap-2 pl-3">
                 <Search className="h-5 w-5 text-muted-foreground" />
@@ -209,7 +210,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft transition hover:opacity-90">
+              <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105">
                 Search
               </button>
             </form>
@@ -218,7 +219,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                 <button
                   key={t}
                   onClick={() => setSearchQuery(t)}
-                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground transition-all duration-300 hover:border-primary hover:text-primary hover:scale-105"
                 >
                   {t}
                 </button>
@@ -239,11 +240,12 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
   );
 }
 
+
 function HeroCard() {
   return (
     <div className="relative">
-      <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 to-transparent blur-2xl" />
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-glow">
+      <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-success/15 to-transparent blur-2xl" />
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-success/10 text-success">
@@ -262,7 +264,7 @@ function HeroCard() {
             { name: "Amoxicillin 500mg", qty: "30 capsules", usd: 14.20 },
             { name: "Ibuprofen 200mg", qty: "60 tablets", usd: 6.80 },
           ].map((m) => (
-            <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3">
+            <div key={m.name} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary-soft text-primary">
                   <Pill className="h-5 w-5" />
@@ -285,12 +287,13 @@ function HeroCard() {
             <p className="text-xs text-muted-foreground">Estimated delivery</p>
             <p className="text-sm font-semibold">Tomorrow, before 12pm</p>
           </div>
-          <button className="rounded-xl bg-foreground px-4 py-2 text-xs font-semibold text-background">Track order</button>
+          <button className="rounded-xl bg-foreground px-4 py-2 text-xs font-semibold text-background transition-all duration-300 hover:scale-105 hover:shadow-sm">Track order</button>
         </div>
       </div>
     </div>
   );
 }
+
 
 type PrescriptionRow = {
   id: string;
@@ -365,9 +368,9 @@ function PrescriptionUpload() {
 
   return (
     <section id="prescription" className="mx-auto max-w-7xl px-6 py-16">
-      <div className="grid gap-8 rounded-3xl border border-border bg-card p-8 shadow-soft md:grid-cols-[1fr_1.1fr] md:p-12">
+      <div className="grid gap-8 rounded-2xl border border-border bg-card p-8 shadow-sm transition-all duration-300 hover:shadow-md md:grid-cols-[1fr_1.1fr] md:p-12">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
             <FileText className="h-3.5 w-3.5" /> Prescription Upload
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">
@@ -394,7 +397,7 @@ function PrescriptionUpload() {
 
         <div>
           {!user ? (
-            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface p-8 text-center">
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface p-8 text-center transition-all duration-300 hover:border-primary/40">
               <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
                 <Lock className="h-6 w-6" />
               </div>
@@ -402,7 +405,7 @@ function PrescriptionUpload() {
               <p className="mt-1 text-sm text-muted-foreground">Your prescriptions are stored in your private, encrypted profile.</p>
               <button
                 onClick={() => navigate({ to: "/auth" })}
-                className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+                className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105"
               >
                 Sign in to continue
               </button>
@@ -413,12 +416,12 @@ function PrescriptionUpload() {
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${
-                  dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50"
+                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 ${
+                  dragging ? "border-primary bg-primary-soft/60" : "border-border bg-surface hover:border-primary/50 hover:shadow-sm"
                 }`}
               >
                 <input ref={inputRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
                   <Upload className="h-6 w-6" />
                 </div>
                 <p className="mt-4 text-base font-semibold">{busy ? "Uploading…" : "Drop your prescription here"}</p>
@@ -427,7 +430,7 @@ function PrescriptionUpload() {
                   type="button"
                   onClick={() => inputRef.current?.click()}
                   disabled={busy}
-                  className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:opacity-60"
+                  className="mt-5 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-all duration-300 hover:scale-105 disabled:opacity-60"
                 >
                   Browse files
                 </button>
@@ -438,7 +441,7 @@ function PrescriptionUpload() {
               {files.length > 0 && (
                 <ul className="mt-4 space-y-2">
                   {files.map((f) => (
-                    <li key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm">
+                    <li key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm transition-all duration-300 hover:shadow-sm hover:border-primary/30">
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-primary" />
                         <span className="font-medium">{f.file_name}</span>
@@ -446,7 +449,7 @@ function PrescriptionUpload() {
                           {f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB · ` : ""}{f.status}
                         </span>
                       </div>
-                      <button onClick={() => removeFile(f)} className="text-muted-foreground hover:text-destructive">
+                      <button onClick={() => removeFile(f)} className="text-muted-foreground transition-colors duration-300 hover:text-destructive">
                         <X className="h-4 w-4" />
                       </button>
                     </li>
@@ -457,6 +460,7 @@ function PrescriptionUpload() {
           )}
         </div>
       </div>
+
 
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:rounded-2xl">
@@ -472,7 +476,7 @@ function PrescriptionUpload() {
           <div className="mt-2 flex justify-center">
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
               Got it
             </button>
@@ -510,9 +514,9 @@ function Categories({
             <button
               key={c.name}
               onClick={() => onSelect(c.name === "All Products" ? null : c.name)}
-              className={`group relative rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-soft ${
+              className={`group relative rounded-xl border p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
                 isActive
-                  ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                  ? "border-primary bg-primary text-primary-foreground shadow-md animate-fade-in"
                   : "border-border bg-card hover:border-primary"
               }`}
               aria-pressed={isActive}
@@ -522,7 +526,7 @@ function Categories({
                   Active
                 </span>
               )}
-              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"}`}>
+              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"} transition-transform duration-300 group-hover:scale-110`}>
                 <c.icon className="h-6 w-6" />
               </div>
               <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
@@ -536,6 +540,7 @@ function Categories({
     </section>
   );
 }
+
 
 
 function ProductGrid({
@@ -568,7 +573,7 @@ function ProductGrid({
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
-          <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground border border-border">
+          <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground">
             {filtered.length} product{filtered.length === 1 ? "" : "s"}
           </span>
         </div>
@@ -580,14 +585,14 @@ function ProductGrid({
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-72 animate-pulse rounded-3xl border border-border bg-card" />
+              <div key={i} className="h-72 animate-pulse rounded-xl border border-border bg-card" />
             ))
           : filtered.map((p) => (
-              <article key={p.id} className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-soft">
-                <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary-soft to-surface">
+              <article key={p.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+                <div className="relative grid aspect-square place-items-center overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary-soft to-surface transition-all duration-300 group-hover:border-primary/30">
                   <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
                   {p.badge && (
-                    <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-soft backdrop-blur">
+                    <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur">
                       {p.badge}
                     </span>
                   )}
@@ -608,7 +613,7 @@ function ProductGrid({
                     <button
                       onClick={() => onAdd({ id: p.id, name: p.name, price: p.amountUSD })}
                       disabled={!p.inStock}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:bg-primary/90 hover:scale-105 disabled:opacity-40"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={3} />
                       Add to Cart
@@ -621,6 +626,7 @@ function ProductGrid({
     </section>
   );
 }
+
 
 
 
@@ -673,14 +679,14 @@ function Checkout({
   return (
     <section id="checkout" className="mx-auto max-w-7xl px-6 py-16">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
           Checkout simulator
         </div>
         <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">A checkout you can trust</h2>
         <p className="mx-auto mt-2 max-w-xl text-muted-foreground">Walk through every step — from cart to confirmation — in a transparent, secure flow.</p>
       </div>
 
-      <div className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
+      <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:shadow-md">
         <div className="grid grid-cols-4 border-b border-border bg-surface">
           {steps.map((s) => {
             const active = step === s.id;
@@ -689,12 +695,12 @@ function Checkout({
               <button
                 key={s.id}
                 onClick={() => setStep(s.id)}
-                className={`flex items-center justify-center gap-2 px-3 py-4 text-sm font-semibold transition ${
-                  active ? "bg-card text-foreground" : done ? "text-primary" : "text-muted-foreground"
+                className={`flex items-center justify-center gap-2 px-3 py-4 text-sm font-semibold transition-all duration-300 ${
+                  active ? "bg-card text-foreground shadow-sm animate-fade-in" : done ? "text-primary hover:bg-primary/5" : "text-muted-foreground hover:bg-muted"
                 }`}
               >
-                <span className={`grid h-7 w-7 place-items-center rounded-full text-xs ${
-                  active ? "bg-primary text-primary-foreground" : done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                <span className={`grid h-7 w-7 place-items-center rounded-full text-xs transition-all duration-300 ${
+                  active ? "bg-primary text-primary-foreground scale-110" : done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                 }`}>
                   {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : s.id}
                 </span>
@@ -703,6 +709,7 @@ function Checkout({
             );
           })}
         </div>
+
 
         <div className="grid gap-6 p-6 md:grid-cols-[1.4fr_1fr] md:p-10">
           <div className="min-h-[280px]">
@@ -715,12 +722,13 @@ function Checkout({
                   </span>
                 </div>
                 {cart.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center text-sm text-muted-foreground transition-all duration-300 hover:border-primary/30 hover:bg-surface">
                     Your cart is empty. Tap <span className="font-semibold text-foreground">“Add to Cart”</span> on any product above to get started.
                   </div>
                 ) : (
                   cart.map((i) => (
-                    <div key={i.id} className="flex items-center justify-between rounded-xl border border-border p-4">
+                    <div key={i.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
+
                       <div className="flex items-center gap-3">
                         <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
                           <Pill className="h-5 w-5" />
@@ -731,12 +739,12 @@ function Checkout({
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-lg border border-border">
-                          <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center"><Minus className="h-3.5 w-3.5" /></button>
+                        <div className="flex items-center gap-2 rounded-lg border border-border bg-card shadow-sm">
+                          <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-l-lg transition-colors duration-300 hover:bg-muted"><Minus className="h-3.5 w-3.5" /></button>
                           <span className="w-6 text-center text-sm font-semibold">{i.qty}</span>
-                          <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center"><Plus className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-r-lg transition-colors duration-300 hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
                         </div>
-                        <button onClick={() => removeItem(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Remove">
+                        <button onClick={() => removeItem(i.id)} className="text-muted-foreground transition-all duration-300 hover:text-destructive hover:scale-110" aria-label="Remove">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -756,7 +764,7 @@ function Checkout({
                   <Field label="City" placeholder="London" />
                   <Field label="Postal code" placeholder="NW1 6XE" />
                 </div>
-                <div className="rounded-xl border border-border bg-surface p-4 text-sm">
+                <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md">
                   <p className="font-semibold">Standard delivery</p>
                   <p className="text-xs text-muted-foreground">Arrives Wed, Jul 1 — Free over $35</p>
                 </div>
@@ -771,7 +779,7 @@ function Checkout({
                     <Link to="/auth" className="font-semibold underline">Sign in</Link> to save this order to your account.
                   </div>
                 )}
-                <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4">
+                <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-5 w-5 text-primary" />
@@ -806,7 +814,7 @@ function Checkout({
             )}
           </div>
 
-          <aside className="rounded-2xl border border-border bg-surface p-6">
+          <aside className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-300 hover:shadow-md">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
               <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
@@ -824,14 +832,14 @@ function Checkout({
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
-                <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold">
+                <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold transition-all duration-300 hover:bg-muted hover:shadow-sm">
                   Back
                 </button>
               )}
               <button
                 onClick={nextStep}
                 disabled={placing || (step < 4 && cart.length === 0)}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60"
               >
                 {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
               </button>
@@ -918,7 +926,7 @@ function Dashboard() {
     <section id="dashboard" className="mx-auto max-w-7xl px-6 py-16">
       <div className="flex items-end justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
             Member dashboard
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">
@@ -931,8 +939,8 @@ function Dashboard() {
       </div>
 
       {!user && !loading ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border bg-card p-12 text-center shadow-soft">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card p-12 text-center shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary transition-transform duration-300 hover:scale-110">
             <UserIcon className="h-6 w-6" />
           </div>
           <p className="max-w-md text-sm text-muted-foreground">
@@ -940,17 +948,17 @@ function Dashboard() {
           </p>
           <Link
             to="/auth"
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105"
           >
             Sign in or create account
           </Link>
         </div>
       ) : (
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md lg:col-span-2">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Recent orders</h3>
-              <a href="#" className="text-sm font-semibold text-primary">See all</a>
+              <a href="#" className="text-sm font-semibold text-primary transition-all duration-300 hover:opacity-80 hover:scale-105">See all</a>
             </div>
             <div className="mt-5 divide-y divide-border">
               {ordersLoading ? (
@@ -961,9 +969,9 @@ function Dashboard() {
                 </p>
               ) : (
                 orders.map((o) => (
-                  <div key={o.id} className="flex items-center justify-between py-4">
+                  <div key={o.id} className="group flex items-center justify-between rounded-xl py-3 px-3 transition-all duration-300 hover:bg-primary-soft/50 hover:-translate-x-1">
                     <div className="flex items-center gap-4">
-                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
+                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary transition-transform duration-300 group-hover:scale-110">
                         <Package className="h-5 w-5" />
                       </div>
                       <div>
@@ -986,25 +994,25 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-soft">
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-primary-soft/70 to-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Refill reminders</h3>
-              <Bell className="h-5 w-5 text-primary" />
+              <Bell className="h-5 w-5 text-primary transition-transform duration-300 hover:scale-110" />
             </div>
             <div className="mt-5 space-y-4">
               {refills.map((r) => (
-                <div key={r.name} className="rounded-2xl border border-border bg-card p-4">
+                <div key={r.name} className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold">{r.name}</p>
                       <p className="text-xs text-muted-foreground">Refill due {r.due}</p>
                     </div>
-                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <button className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground transition-all duration-300 hover:scale-110 hover:bg-primary/90">
                       <RefreshCw className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${r.progress}%` }} />
+                    <div className="h-full rounded-full bg-primary transition-all duration-300 group-hover:bg-primary/90" style={{ width: `${r.progress}%` }} />
                   </div>
                 </div>
               ))}
