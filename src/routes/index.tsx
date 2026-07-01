@@ -739,12 +739,12 @@ function Checkout({
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-lg border border-border">
-                          <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center"><Minus className="h-3.5 w-3.5" /></button>
+                        <div className="flex items-center gap-2 rounded-lg border border-border bg-card shadow-sm">
+                          <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-l-lg transition-colors duration-300 hover:bg-muted"><Minus className="h-3.5 w-3.5" /></button>
                           <span className="w-6 text-center text-sm font-semibold">{i.qty}</span>
-                          <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center"><Plus className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-r-lg transition-colors duration-300 hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
                         </div>
-                        <button onClick={() => removeItem(i.id)} className="text-muted-foreground hover:text-destructive" aria-label="Remove">
+                        <button onClick={() => removeItem(i.id)} className="text-muted-foreground transition-all duration-300 hover:text-destructive hover:scale-110" aria-label="Remove">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
