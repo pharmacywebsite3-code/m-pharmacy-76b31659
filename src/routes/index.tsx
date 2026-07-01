@@ -926,7 +926,7 @@ function Dashboard() {
     <section id="dashboard" className="mx-auto max-w-7xl px-6 py-16">
       <div className="flex items-end justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
             Member dashboard
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">
