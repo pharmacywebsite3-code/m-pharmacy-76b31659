@@ -939,8 +939,8 @@ function Dashboard() {
       </div>
 
       {!user && !loading ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border bg-card p-12 text-center shadow-soft">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card p-12 text-center shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary transition-transform duration-300 hover:scale-110">
             <UserIcon className="h-6 w-6" />
           </div>
           <p className="max-w-md text-sm text-muted-foreground">
@@ -948,17 +948,17 @@ function Dashboard() {
           </p>
           <Link
             to="/auth"
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105"
           >
             Sign in or create account
           </Link>
         </div>
       ) : (
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md lg:col-span-2">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Recent orders</h3>
-              <a href="#" className="text-sm font-semibold text-primary">See all</a>
+              <a href="#" className="text-sm font-semibold text-primary transition-all duration-300 hover:opacity-80 hover:scale-105">See all</a>
             </div>
             <div className="mt-5 divide-y divide-border">
               {ordersLoading ? (
