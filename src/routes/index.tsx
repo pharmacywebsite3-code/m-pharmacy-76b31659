@@ -179,12 +179,13 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
 function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-soft/60 via-background to-background" />
-      <div className="absolute right-0 top-0 -z-10 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-soft/90 via-background to-white" />
+      <div className="absolute -left-20 -top-20 -z-10 h-[600px] w-[600px] rounded-full bg-primary/15 blur-3xl" />
+      <div className="absolute right-0 bottom-0 -z-10 h-[500px] w-[500px] rounded-full bg-success/10 blur-3xl" />
       <div className="mx-auto max-w-7xl px-6 pb-16 pt-16 md:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card px-3 py-1 text-xs font-semibold text-primary shadow-soft">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
               <ShieldCheck className="h-3.5 w-3.5" /> HIPAA-compliant · Verified pharmacists
             </div>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
@@ -197,7 +198,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
 
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="mt-8 flex items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-soft"
+              className="mt-8 flex items-center gap-2 rounded-2xl border border-border bg-card/90 p-2 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
             >
               <div className="flex flex-1 items-center gap-2 pl-3">
                 <Search className="h-5 w-5 text-muted-foreground" />
@@ -209,7 +210,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft transition hover:opacity-90">
+              <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105">
                 Search
               </button>
             </form>
@@ -218,7 +219,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                 <button
                   key={t}
                   onClick={() => setSearchQuery(t)}
-                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                  className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground transition-all duration-300 hover:border-primary hover:text-primary hover:scale-105"
                 >
                   {t}
                 </button>
@@ -238,6 +239,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
     </section>
   );
 }
+
 
 function HeroCard() {
   return (
