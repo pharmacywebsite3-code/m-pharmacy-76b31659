@@ -35,6 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 const categories = [
+  { name: "All Products", icon: Search, count: 12, tone: "from-slate-50 to-slate-100" },
   { name: "Wellness", icon: HeartPulse, count: 128, tone: "from-emerald-50 to-teal-50" },
   { name: "First Aid", icon: Bandage, count: 64, tone: "from-rose-50 to-orange-50" },
   { name: "Vitamins", icon: Pill, count: 212, tone: "from-amber-50 to-yellow-50" },
@@ -42,6 +43,7 @@ const categories = [
   { name: "Baby Care", icon: Baby, count: 53, tone: "from-sky-50 to-blue-50" },
   { name: "Cold & Flu", icon: Stethoscope, count: 41, tone: "from-cyan-50 to-teal-50" },
 ];
+
 
 const refills = [
   { name: "Metformin 500mg", due: "in 3 days", progress: 80 },
@@ -66,6 +68,7 @@ export type CartItem = {
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
@@ -98,8 +101,8 @@ function Home() {
       <Header cartCount={cartCount} />
       <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
-      <Categories />
-      <ProductGrid searchQuery={searchQuery} onAdd={addToCart} />
+      <Categories activeCategory={activeCategory} onSelect={setActiveCategory} />
+      <ProductGrid searchQuery={searchQuery} activeCategory={activeCategory} onAdd={addToCart} />
       <Checkout cart={cart} updateQty={updateQty} removeItem={removeItem} />
       <Dashboard />
       <Footer />
@@ -107,6 +110,7 @@ function Home() {
     </div>
   );
 }
+
 
 function Logo() {
   return (
@@ -479,39 +483,74 @@ function PrescriptionUpload() {
   );
 }
 
-function Categories() {
+function Categories({
+  activeCategory,
+  onSelect,
+}: {
+  activeCategory: string | null;
+  onSelect: (category: string | null) => void;
+}) {
   return (
     <section id="shop" className="mx-auto max-w-7xl px-6 py-10">
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Shop by category</h2>
-          <p className="mt-2 text-muted-foreground">Browse over-the-counter essentials curated by our pharmacists.</p>
+          <p className="mt-2 text-muted-foreground">
+            {activeCategory
+              ? `Browsing ${activeCategory.toLowerCase()}. Tap "All Products" to reset.`
+              : "Browse over-the-counter essentials curated by our pharmacists."}
+          </p>
         </div>
-        <a href="#" className="hidden items-center gap-1 text-sm font-semibold text-primary md:inline-flex">
-          View all <ChevronRight className="h-4 w-4" />
-        </a>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {categories.map((c) => (
-          <button key={c.name} className="group rounded-2xl border border-border bg-card p-5 text-left transition hover:-translate-y-1 hover:border-primary hover:shadow-soft">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} text-foreground`}>
-              <c.icon className="h-6 w-6 text-primary" />
-            </div>
-            <p className="mt-4 font-semibold">{c.name}</p>
-            <p className="text-xs text-muted-foreground">{c.count} products</p>
-          </button>
-        ))}
+      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+        {categories.map((c) => {
+          const isActive = activeCategory === c.name || (c.name === "All Products" && activeCategory === null);
+          return (
+            <button
+              key={c.name}
+              onClick={() => onSelect(c.name === "All Products" ? null : c.name)}
+              className={`group relative rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-soft ${
+                isActive
+                  ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                  : "border-border bg-card hover:border-primary"
+              }`}
+              aria-pressed={isActive}
+            >
+              {isActive && (
+                <span className="absolute right-2 top-2 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                  Active
+                </span>
+              )}
+              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"}`}>
+                <c.icon className="h-6 w-6" />
+              </div>
+              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
+              <p className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                {c.count} products
+              </p>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: { id: string; name: string; price: number }) => void }) {
+
+function ProductGrid({
+  searchQuery,
+  activeCategory,
+  onAdd,
+}: {
+  searchQuery: string;
+  activeCategory: string | null;
+  onAdd: (p: { id: string; name: string; price: number }) => void;
+}) {
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
-    queryKey: ["medications", "external"],
-    queryFn: () => loadMedications({ data: {} }) as Promise<ExternalMedication[]>,
+    queryKey: ["medications", "external", activeCategory ?? "all"],
+    queryFn: () => loadMedications({ data: { category: activeCategory ?? undefined } }) as Promise<ExternalMedication[]>,
     staleTime: 60_000,
   });
 
@@ -522,23 +561,21 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
     p.category.toLowerCase().includes(query)
   );
 
+  const heading = activeCategory ? `${activeCategory}` : "All medications";
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
-        <div>
-          {query ? (
-            filtered.length === 0 ? (
-              <span>No results for "<span className="font-medium text-foreground">{searchQuery}</span>".</span>
-            ) : (
-              <span>{filtered.length} result{filtered.length === 1 ? "" : "s"} for "<span className="font-medium text-foreground">{searchQuery}</span>"</span>
-            )
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
-              {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
+          <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground border border-border">
+            {filtered.length} product{filtered.length === 1 ? "" : "s"}
+          </span>
         </div>
+        <span className="inline-flex items-center gap-1.5 text-xs">
+          <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
+          {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {isLoading
@@ -584,6 +621,7 @@ function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: {
     </section>
   );
 }
+
 
 
 const steps = [
