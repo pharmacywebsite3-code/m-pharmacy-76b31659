@@ -483,33 +483,60 @@ function PrescriptionUpload() {
   );
 }
 
-function Categories() {
+function Categories({
+  activeCategory,
+  onSelect,
+}: {
+  activeCategory: string | null;
+  onSelect: (category: string | null) => void;
+}) {
   return (
     <section id="shop" className="mx-auto max-w-7xl px-6 py-10">
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Shop by category</h2>
-          <p className="mt-2 text-muted-foreground">Browse over-the-counter essentials curated by our pharmacists.</p>
+          <p className="mt-2 text-muted-foreground">
+            {activeCategory
+              ? `Browsing ${activeCategory.toLowerCase()}. Tap "All Products" to reset.`
+              : "Browse over-the-counter essentials curated by our pharmacists."}
+          </p>
         </div>
-        <a href="#" className="hidden items-center gap-1 text-sm font-semibold text-primary md:inline-flex">
-          View all <ChevronRight className="h-4 w-4" />
-        </a>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {categories.map((c) => (
-          <button key={c.name} className="group rounded-2xl border border-border bg-card p-5 text-left transition hover:-translate-y-1 hover:border-primary hover:shadow-soft">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} text-foreground`}>
-              <c.icon className="h-6 w-6 text-primary" />
-            </div>
-            <p className="mt-4 font-semibold">{c.name}</p>
-            <p className="text-xs text-muted-foreground">{c.count} products</p>
-          </button>
-        ))}
+      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+        {categories.map((c) => {
+          const isActive = activeCategory === c.name || (c.name === "All Products" && activeCategory === null);
+          return (
+            <button
+              key={c.name}
+              onClick={() => onSelect(c.name === "All Products" ? null : c.name)}
+              className={`group relative rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-soft ${
+                isActive
+                  ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                  : "border-border bg-card hover:border-primary"
+              }`}
+              aria-pressed={isActive}
+            >
+              {isActive && (
+                <span className="absolute right-2 top-2 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                  Active
+                </span>
+              )}
+              <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"}`}>
+                <c.icon className="h-6 w-6" />
+              </div>
+              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
+              <p className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                {c.count} products
+              </p>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
 }
+
 
 function ProductGrid({ searchQuery, onAdd }: { searchQuery: string; onAdd: (p: { id: string; name: string; price: number }) => void }) {
   const loadMedications = useServerFn(fetchMedications);
