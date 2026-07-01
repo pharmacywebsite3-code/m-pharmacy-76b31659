@@ -35,6 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 const categories = [
+  { name: "All Products", icon: Search, count: 12, tone: "from-slate-50 to-slate-100" },
   { name: "Wellness", icon: HeartPulse, count: 128, tone: "from-emerald-50 to-teal-50" },
   { name: "First Aid", icon: Bandage, count: 64, tone: "from-rose-50 to-orange-50" },
   { name: "Vitamins", icon: Pill, count: 212, tone: "from-amber-50 to-yellow-50" },
@@ -42,6 +43,7 @@ const categories = [
   { name: "Baby Care", icon: Baby, count: 53, tone: "from-sky-50 to-blue-50" },
   { name: "Cold & Flu", icon: Stethoscope, count: 41, tone: "from-cyan-50 to-teal-50" },
 ];
+
 
 const refills = [
   { name: "Metformin 500mg", due: "in 3 days", progress: 80 },
