@@ -151,7 +151,7 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
           {user ? (
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-all duration-300 hover:bg-muted hover:scale-105"
               title={user.email ?? undefined}
             >
               <LogOut className="h-3.5 w-3.5" /> Sign out
@@ -159,12 +159,12 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
           ) : (
             <Link
               to="/auth"
-              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
               <UserIcon className="h-3.5 w-3.5" /> Sign in
             </Link>
           )}
-          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-muted">
+          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105">
             <ShoppingCart className="h-4.5 w-4.5" />
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
