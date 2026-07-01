@@ -370,7 +370,7 @@ function PrescriptionUpload() {
     <section id="prescription" className="mx-auto max-w-7xl px-6 py-16">
       <div className="grid gap-8 rounded-2xl border border-border bg-card p-8 shadow-sm transition-all duration-300 hover:shadow-md md:grid-cols-[1fr_1.1fr] md:p-12">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
             <FileText className="h-3.5 w-3.5" /> Prescription Upload
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">
