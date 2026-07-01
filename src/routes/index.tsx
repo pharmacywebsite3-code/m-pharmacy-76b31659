@@ -814,7 +814,7 @@ function Checkout({
             )}
           </div>
 
-          <aside className="rounded-2xl border border-border bg-surface p-6">
+          <aside className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-300 hover:shadow-md">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
             <dl className="mt-4 space-y-2 text-sm">
               <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
@@ -832,14 +832,14 @@ function Checkout({
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
-                <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold">
+                <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold transition-all duration-300 hover:bg-muted hover:shadow-sm">
                   Back
                 </button>
               )}
               <button
                 onClick={nextStep}
                 disabled={placing || (step < 4 && cart.length === 0)}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60"
               >
                 {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
               </button>
