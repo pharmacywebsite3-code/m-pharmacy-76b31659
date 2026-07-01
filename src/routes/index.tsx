@@ -679,14 +679,14 @@ function Checkout({
   return (
     <section id="checkout" className="mx-auto max-w-7xl px-6 py-16">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
           Checkout simulator
         </div>
         <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">A checkout you can trust</h2>
         <p className="mx-auto mt-2 max-w-xl text-muted-foreground">Walk through every step — from cart to confirmation — in a transparent, secure flow.</p>
       </div>
 
-      <div className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
+      <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:shadow-md">
         <div className="grid grid-cols-4 border-b border-border bg-surface">
           {steps.map((s) => {
             const active = step === s.id;
@@ -695,12 +695,12 @@ function Checkout({
               <button
                 key={s.id}
                 onClick={() => setStep(s.id)}
-                className={`flex items-center justify-center gap-2 px-3 py-4 text-sm font-semibold transition ${
-                  active ? "bg-card text-foreground" : done ? "text-primary" : "text-muted-foreground"
+                className={`flex items-center justify-center gap-2 px-3 py-4 text-sm font-semibold transition-all duration-300 ${
+                  active ? "bg-card text-foreground shadow-sm animate-fade-in" : done ? "text-primary hover:bg-primary/5" : "text-muted-foreground hover:bg-muted"
                 }`}
               >
-                <span className={`grid h-7 w-7 place-items-center rounded-full text-xs ${
-                  active ? "bg-primary text-primary-foreground" : done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                <span className={`grid h-7 w-7 place-items-center rounded-full text-xs transition-all duration-300 ${
+                  active ? "bg-primary text-primary-foreground scale-110" : done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                 }`}>
                   {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : s.id}
                 </span>
@@ -709,6 +709,7 @@ function Checkout({
             );
           })}
         </div>
+
 
         <div className="grid gap-6 p-6 md:grid-cols-[1.4fr_1fr] md:p-10">
           <div className="min-h-[280px]">
