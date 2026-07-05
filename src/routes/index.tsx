@@ -99,6 +99,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header cartCount={cartCount} />
+      <VideoSplash />
       <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <PrescriptionUpload />
       <Categories activeCategory={activeCategory} onSelect={setActiveCategory} />
