@@ -74,33 +74,135 @@ function jitter(seed: string, range: number): number {
 }
 
 async function simulateLatency() {
-  await new Promise((r) => setTimeout(r, 250 + Math.random() * 250));
+  await new Promise((r) => setTimeout(r, 120 + Math.random() * 180));
+}
+
+// Map UI categories to OpenFDA search expressions covering that therapeutic area.
+const CATEGORY_QUERIES: Record<string, string> = {
+  Wellness: 'openfda.pharm_class_epc:"Nonsteroidal Anti-inflammatory Drug"',
+  "First Aid": 'openfda.pharm_class_epc:"Antiseptic"',
+  Vitamins: "openfda.product_type:HUMAN+OTC+DRUG+AND+openfda.substance_name:vitamin",
+  Herbal: "openfda.substance_name:(ginger+chamomile+echinacea+ginseng+turmeric)",
+  "Baby Care": "openfda.product_type:HUMAN+OTC+DRUG+AND+indications_and_usage:infant",
+  "Cold & Flu": 'openfda.pharm_class_epc:"Antitussive"',
+};
+
+const FALLBACK_CATEGORY = "Wellness";
+
+type OpenFdaResult = {
+  id?: string;
+  openfda?: {
+    brand_name?: string[];
+    generic_name?: string[];
+    manufacturer_name?: string[];
+    product_type?: string[];
+    pharm_class_epc?: string[];
+    route?: string[];
+  };
+};
+
+function titleCase(s: string): string {
+  return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function pickName(r: OpenFdaResult, fallbackIdx: number): string {
+  const brand = r.openfda?.brand_name?.[0];
+  const generic = r.openfda?.generic_name?.[0];
+  const raw = brand || generic || `Medication ${fallbackIdx + 1}`;
+  return titleCase(raw.split(/[,;]/)[0].trim()).slice(0, 60);
+}
+
+async function fetchFromOpenFda(category: string): Promise<ExternalMedication[]> {
+  const query = CATEGORY_QUERIES[category] ?? CATEGORY_QUERIES[FALLBACK_CATEGORY];
+  const url = `https://api.fda.gov/drug/label.json?search=${query}&limit=12`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`OpenFDA ${res.status}`);
+  const json = (await res.json()) as { results?: OpenFdaResult[] };
+  const results = json.results ?? [];
+  const stamp = new Date().toISOString();
+  const dayKey = stamp.slice(0, 13);
+
+  return results.slice(0, 12).map((r, i) => {
+    const name = pickName(r, i);
+    const id = r.id ?? `${category}-${i}`;
+    const sku = `RX-${(r.openfda?.generic_name?.[0] ?? name).replace(/[^A-Z0-9]/gi, "").slice(0, 8).toUpperCase() || "MED"}-${i}`;
+    const basePrice = 4 + ((Math.abs(hash(id)) % 2600) / 100); // $4.00 – $30.00
+    const amountUSD = Math.max(0.5, +(basePrice + jitter(id + dayKey, 0.4)).toFixed(2));
+    const amountETB = +(amountUSD * ETB_PER_USD).toFixed(2);
+    const stockCount = Math.floor(20 + (jitter(sku + dayKey, 80) + 80));
+    const manufacturer = titleCase(r.openfda?.manufacturer_name?.[0] ?? "Generic Labs").slice(0, 40);
+    const badge = i === 0 ? "Best Seller" : i === 1 ? "Popular" : null;
+    return {
+      id,
+      sku,
+      name,
+      category,
+      amountUSD,
+      amountETB,
+      fxRate: ETB_PER_USD,
+      inStock: stockCount > 0,
+      stockCount,
+      badge,
+      manufacturer,
+      updatedAt: stamp,
+    };
+  });
+}
+
+function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function buildMockCatalog(): ExternalMedication[] {
+  const stamp = new Date().toISOString();
+  const dayKey = stamp.slice(0, 13);
+  return CATALOG.map((item) => {
+    const base = BASE_PRICES[item.id] ?? 9.99;
+    const amountUSD = Math.max(0.5, +(base + jitter(item.id + dayKey, 0.4)).toFixed(2));
+    const amountETB = +(amountUSD * ETB_PER_USD).toFixed(2);
+    const stockCount = Math.floor(20 + (jitter(item.sku + dayKey, 80) + 80));
+    return {
+      ...item,
+      amountUSD,
+      amountETB,
+      fxRate: ETB_PER_USD,
+      stockCount,
+      inStock: stockCount > 0,
+      updatedAt: stamp,
+    };
+  });
 }
 
 export const fetchMedications = createServerFn({ method: "GET" })
   .inputValidator((input: { search?: string; category?: string } | undefined) => input ?? {})
   .handler(async ({ data }): Promise<ExternalMedication[]> => {
-    // const apiKey = process.env.PHARMA_API_KEY; // wired for real upstream
     await simulateLatency();
 
-    const stamp = new Date().toISOString();
-    const dayKey = stamp.slice(0, 13); // hourly jitter window
+    let results: ExternalMedication[] = [];
 
-    let results: ExternalMedication[] = CATALOG.map((item) => {
-      const base = BASE_PRICES[item.id] ?? 9.99;
-      const amountUSD = Math.max(0.5, +(base + jitter(item.id + dayKey, 0.4)).toFixed(2));
-      const amountETB = +(amountUSD * ETB_PER_USD).toFixed(2);
-      const stockCount = Math.floor(20 + (jitter(item.sku + dayKey, 80) + 80));
-      return {
-        ...item,
-        amountUSD,
-        amountETB,
-        fxRate: ETB_PER_USD,
-        stockCount,
-        inStock: stockCount > 0,
-        updatedAt: stamp,
-      };
-    });
+    if (data.category && CATEGORY_QUERIES[data.category]) {
+      try {
+        results = await fetchFromOpenFda(data.category);
+      } catch (err) {
+        console.error("[medications] OpenFDA fetch failed, falling back to mock:", err);
+        results = buildMockCatalog().filter((m) => m.category === data.category);
+      }
+    } else {
+      // All Products: fan out to all categories in parallel, then merge.
+      try {
+        const chunks = await Promise.all(
+          Object.keys(CATEGORY_QUERIES).map((cat) =>
+            fetchFromOpenFda(cat).catch(() => [] as ExternalMedication[]),
+          ),
+        );
+        results = chunks.flat();
+        if (results.length === 0) results = buildMockCatalog();
+      } catch {
+        results = buildMockCatalog();
+      }
+    }
 
     const q = data.search?.trim().toLowerCase();
     if (q) {
@@ -108,8 +210,6 @@ export const fetchMedications = createServerFn({ method: "GET" })
         (m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q),
       );
     }
-    if (data.category) {
-      results = results.filter((m) => m.category === data.category);
-    }
     return results;
   });
+
