@@ -113,6 +113,141 @@ function Home() {
 }
 
 
+function VideoSplash() {
+  const scrollToShop = () => {
+    document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <section
+      aria-label="Trusted pharmacy intro"
+      className="relative isolate mx-auto mt-4 max-w-[1400px] overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary-soft via-background to-accent/40 shadow-soft"
+      style={{ height: "min(78vh, 640px)" }}
+    >
+      {/* Animated background scene (CSS/SVG motion graphics) */}
+      <div className="absolute inset-0 -z-10">
+        {/* Ambient gradient blobs */}
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-primary/30 blur-3xl splash-drift" />
+        <div className="absolute -right-24 top-16 h-[28rem] w-[28rem] rounded-full bg-success/25 blur-3xl splash-drift-slow" />
+        <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-accent/60 blur-3xl splash-drift" />
+
+        {/* Floating capsules */}
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden>
+          <defs>
+            <linearGradient id="pill1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stopColor="oklch(0.65 0.14 175)" />
+              <stop offset="1" stopColor="oklch(0.85 0.06 175)" />
+            </linearGradient>
+            <linearGradient id="pill2" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stopColor="oklch(0.72 0.14 155)" />
+              <stop offset="1" stopColor="oklch(0.92 0.05 155)" />
+            </linearGradient>
+          </defs>
+          <g className="splash-float-a" style={{ transformOrigin: "150px 180px" }}>
+            <rect x="80" y="150" width="140" height="56" rx="28" fill="url(#pill1)" opacity="0.85" />
+            <line x1="150" y1="150" x2="150" y2="206" stroke="white" strokeWidth="2" opacity="0.6" />
+          </g>
+          <g className="splash-float-b" style={{ transformOrigin: "1050px 520px" }}>
+            <rect x="960" y="480" width="120" height="48" rx="24" fill="url(#pill2)" opacity="0.8" transform="rotate(-25 1020 504)" />
+          </g>
+          <g className="splash-float-c" style={{ transformOrigin: "1080px 140px" }}>
+            <circle cx="1080" cy="140" r="34" fill="url(#pill1)" opacity="0.75" />
+          </g>
+          <g className="splash-float-a" style={{ transformOrigin: "120px 560px" }}>
+            <circle cx="120" cy="560" r="22" fill="url(#pill2)" opacity="0.7" />
+          </g>
+
+          {/* Delivery route line */}
+          <path
+            d="M -20 500 Q 300 420 600 500 T 1220 460"
+            fill="none"
+            stroke="oklch(0.58 0.13 175)"
+            strokeWidth="2"
+            strokeDasharray="6 10"
+            opacity="0.45"
+            className="splash-dash"
+          />
+        </svg>
+      </div>
+
+      {/* Soft white overlay for legibility */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background/85 via-background/30 to-background/50" />
+
+      {/* Content */}
+      <div className="relative flex h-full flex-col items-center justify-center px-6 text-center">
+        {/* Trust chips */}
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-2 splash-fade" style={{ animationDelay: "0.1s" }}>
+          {[
+            { label: "Fast Delivery", icon: "🚚" },
+            { label: "Verified Pharmacists", icon: "🛡️" },
+            { label: "AI-Powered", icon: "✨" },
+          ].map((c) => (
+            <span
+              key={c.label}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-medium text-primary shadow-sm backdrop-blur"
+            >
+              <span>{c.icon}</span> {c.label}
+            </span>
+          ))}
+        </div>
+
+        <h1
+          className="max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight text-foreground splash-fade sm:text-5xl md:text-6xl"
+          style={{ animationDelay: "0.25s" }}
+        >
+          Your Trusted Pharmacy,{" "}
+          <span className="bg-gradient-to-r from-primary to-success bg-clip-text text-transparent">
+            Powered by AI
+          </span>
+          .
+          <br />
+          <span className="text-2xl font-medium text-muted-foreground sm:text-3xl md:text-4xl">
+            Fast Delivery Nationwide.
+          </span>
+        </h1>
+
+        <p
+          className="mt-5 max-w-3xl text-lg font-medium text-foreground/80 splash-fade sm:text-xl"
+          style={{ animationDelay: "0.45s", fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}
+        >
+          የታመነው ፋርማሲዎ በዘመናዊ ቴክኖሎጂ።{" "}
+          <span className="text-primary">ፈጣን አቅርቦት በመላው ኢትዮጵያ።</span>
+        </p>
+
+        <div className="mt-8 splash-fade" style={{ animationDelay: "0.65s" }}>
+          <button
+            type="button"
+            onClick={scrollToShop}
+            className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-primary to-success px-8 py-4 text-base font-semibold text-primary-foreground shadow-glow transition-all duration-300 hover:scale-105 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:text-lg"
+          >
+            <span>Shop Medications</span>
+            <span className="h-5 w-px bg-primary-foreground/40" />
+            <span style={{ fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}>አሁኑኑ ይግዙ</span>
+            <svg
+              className="ml-1 h-5 w-5 transition-transform duration-300 group-hover:translate-y-0.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 splash-fade" style={{ animationDelay: "1s" }}>
+          <div className="flex h-9 w-6 items-start justify-center rounded-full border-2 border-primary/40 p-1">
+            <div className="h-2 w-1 rounded-full bg-primary splash-scroll" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Logo() {
   return (
     <div className="flex items-center gap-2">
