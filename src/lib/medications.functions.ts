@@ -61,6 +61,8 @@ const BASE_PRICES: Record<string, number> = {
   "med-001": 4.99, "med-002": 5.49, "med-003": 12.5, "med-004": 9.99,
   "med-005": 6.75, "med-006": 18.99, "med-007": 8.4, "med-008": 9.2,
   "med-009": 14.0, "med-010": 5.5, "med-011": 7.25, "med-012": 11.75,
+  "med-013": 5.99, "med-014": 6.49, "med-015": 10.25, "med-016": 8.75,
+  "med-017": 7.5, "med-018": 4.25, "med-019": 24.99, "med-020": 29.5,
 };
 
 // Deterministic "live" jitter per request so prices feel dynamic but stable
