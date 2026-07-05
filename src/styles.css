@@ -93,4 +93,52 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes splash-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes splash-drift {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(30px,-20px,0) scale(1.08); }
+}
+@keyframes splash-drift-slow {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(-40px,25px,0) scale(1.05); }
+}
+@keyframes splash-float-a {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(6deg); }
+}
+@keyframes splash-float-b {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(-8deg); }
+}
+@keyframes splash-float-c {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-22px) rotate(12deg); }
+}
+@keyframes splash-dash {
+  to { stroke-dashoffset: -320; }
+}
+@keyframes splash-scroll {
+  0% { opacity: 0; transform: translateY(0); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(10px); }
+}
+
+.splash-fade { opacity: 0; animation: splash-fade-up 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
+.splash-drift { animation: splash-drift 12s ease-in-out infinite; }
+.splash-drift-slow { animation: splash-drift-slow 16s ease-in-out infinite; }
+.splash-float-a { animation: splash-float-a 7s ease-in-out infinite; }
+.splash-float-b { animation: splash-float-b 9s ease-in-out infinite; }
+.splash-float-c { animation: splash-float-c 8s ease-in-out infinite; }
+.splash-dash { animation: splash-dash 8s linear infinite; }
+.splash-scroll { animation: splash-scroll 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-fade, .splash-drift, .splash-drift-slow,
+  .splash-float-a, .splash-float-b, .splash-float-c,
+  .splash-dash, .splash-scroll { animation: none; opacity: 1; }
+}
+
 
