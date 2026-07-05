@@ -35,8 +35,8 @@ export type ExternalMedication = {
 };
 
 const CATALOG: Omit<ExternalMedication, "amountUSD" | "amountETB" | "fxRate" | "inStock" | "stockCount" | "updatedAt">[] = [
-  { id: "med-001", sku: "RX-PARA-500", name: "Paracetamol 500mg", category: "Pain Relief", badge: "OTC", manufacturer: "Acme Labs" },
-  { id: "med-002", sku: "RX-ASPI-100", name: "Aspirin 100mg", category: "Pain Relief", badge: "OTC", manufacturer: "Bayer" },
+  { id: "med-001", sku: "RX-PARA-500", name: "Paracetamol 500mg", category: "Wellness", badge: "OTC", manufacturer: "Acme Labs" },
+  { id: "med-002", sku: "RX-ASPI-100", name: "Aspirin 100mg", category: "Wellness", badge: "OTC", manufacturer: "Bayer" },
   { id: "med-003", sku: "RX-VTD3-1K", name: "Vitamin D3 1000 IU", category: "Vitamins", badge: "Best Seller", manufacturer: "NaturePharm" },
   { id: "med-004", sku: "RX-VTC-500", name: "Vitamin C 500mg", category: "Vitamins", badge: "Popular", manufacturer: "NaturePharm" },
   { id: "med-005", sku: "RX-BAND-24", name: "Sterile Bandages (24pk)", category: "First Aid", badge: null, manufacturer: "MediCare" },
@@ -45,8 +45,16 @@ const CATALOG: Omit<ExternalMedication, "amountUSD" | "amountETB" | "fxRate" | "
   { id: "med-008", sku: "RX-BABY-LOT", name: "Baby Gentle Lotion", category: "Baby Care", badge: null, manufacturer: "TenderCare" },
   { id: "med-009", sku: "RX-MAGN-CX", name: "Magnesium Complex", category: "Vitamins", badge: null, manufacturer: "NaturePharm" },
   { id: "med-010", sku: "RX-ANTI-SPR", name: "Antiseptic Spray", category: "First Aid", badge: null, manufacturer: "MediCare" },
-  { id: "med-011", sku: "RX-IBUP-200", name: "Ibuprofen 200mg", category: "Pain Relief", badge: null, manufacturer: "Bayer" },
-  { id: "med-012", sku: "RX-LORA-10", name: "Loratadine 10mg", category: "Allergy", badge: "New", manufacturer: "Acme Labs" },
+  { id: "med-011", sku: "RX-IBUP-200", name: "Ibuprofen 200mg", category: "Wellness", badge: null, manufacturer: "Bayer" },
+  { id: "med-012", sku: "RX-LORA-10", name: "Loratadine 10mg", category: "Cold & Flu", badge: "New", manufacturer: "Acme Labs" },
+  { id: "med-013", sku: "RX-GING-TEA", name: "Ginger Herbal Tea", category: "Herbal", badge: null, manufacturer: "GreenLeaf" },
+  { id: "med-014", sku: "RX-CHAM-TEA", name: "Chamomile Calm Tea", category: "Herbal", badge: "Popular", manufacturer: "GreenLeaf" },
+  { id: "med-015", sku: "RX-ECHI-EXT", name: "Echinacea Extract", category: "Herbal", badge: null, manufacturer: "GreenLeaf" },
+  { id: "med-016", sku: "RX-BABY-SHM", name: "Baby Gentle Shampoo", category: "Baby Care", badge: null, manufacturer: "TenderCare" },
+  { id: "med-017", sku: "RX-DIAP-CRM", name: "Diaper Rash Cream", category: "Baby Care", badge: null, manufacturer: "TenderCare" },
+  { id: "med-018", sku: "RX-THRO-LOZ", name: "Throat Lozenges", category: "Cold & Flu", badge: null, manufacturer: "Acme Labs" },
+  { id: "med-019", sku: "RX-FAK-DLX", name: "Deluxe First Aid Kit", category: "First Aid", badge: "Best Seller", manufacturer: "MediCare" },
+  { id: "med-020", sku: "RX-PROT-PWD", name: "Whey Protein Powder", category: "Wellness", badge: null, manufacturer: "NaturePharm" },
 ];
 
 const BASE_PRICES: Record<string, number> = {
