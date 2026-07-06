@@ -1396,17 +1396,21 @@ function Dashboard() {
 }
 
 function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 md:grid-cols-4">
         <div>
           <Logo />
-          <p className="mt-3 text-sm text-muted-foreground">Licensed online pharmacy serving patients since 2014.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("footer.tagline")}</p>
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+            <ShieldCheck className="h-3.5 w-3.5" /> Regulated by EFDA
+          </div>
         </div>
         {[
-          { title: "Shop", links: ["Wellness", "Vitamins", "First Aid", "Baby Care"] },
-          { title: "Services", links: ["Prescription Upload", "Refill Reminders", "Pharmacist Chat", "Insurance"] },
-          { title: "Company", links: ["About", "Privacy", "Terms", "Contact"] },
+          { title: t("footer.shop"), links: ["Wellness", "Vitamins", "First Aid", "Baby Care"] },
+          { title: t("footer.services"), links: ["Prescription Upload", "Refill Reminders", "Pharmacist Chat", "Insurance"] },
+          { title: t("footer.company"), links: ["About", "Privacy", "Terms", "Contact"] },
         ].map((col) => (
           <div key={col.title}>
             <h5 className="text-sm font-bold">{col.title}</h5>
@@ -1417,7 +1421,7 @@ function Footer() {
         ))}
       </div>
       <div className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-        © 2026 M-Pharmacy · NABP-accredited · Licensed in all 50 states
+        © 2026 {t("footer.copyright")}
       </div>
     </footer>
   );
