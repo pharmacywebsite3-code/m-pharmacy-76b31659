@@ -794,8 +794,10 @@ function Checkout({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const submitOrder = useServerFn(placeOrder);
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const tax = +(subtotal * 0.08).toFixed(2);
@@ -806,15 +808,18 @@ function Checkout({
     if (cart.length === 0) return;
     if (step === 3 && user) {
       setPlacing(true);
+      setOrderError(null);
       try {
-        await supabase.from("orders").insert({
-          user_id: user.id,
-          items: cart.map((i) => ({ name: i.name, price: i.price, qty: i.qty })),
-          item_count: itemCount,
-          total,
-          status: "Processing",
+        await submitOrder({
+          data: {
+            items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+          },
         });
         queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+      } catch (err) {
+        setOrderError(err instanceof Error ? err.message : "Failed to place order");
+        setPlacing(false);
+        return;
       } finally {
         setPlacing(false);
       }
