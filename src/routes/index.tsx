@@ -1354,8 +1354,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{fmtUSD(o.total)}</p>
-                      <p className="text-[10px] text-muted-foreground">{fmtETB(o.total)}</p>
+                      <p className="font-semibold">{formatPrice(o.total, currency)}</p>
                       <span className={`text-xs font-semibold ${o.status === "Delivered" ? "text-success" : "text-primary"}`}>
                         {o.status}
                       </span>
