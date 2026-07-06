@@ -20,10 +20,23 @@ function detectAmharic(text: string): boolean {
   return /[\u1200-\u137F]/.test(text);
 }
 
+const ALLOWED_ROLES = new Set(["user", "assistant", "system"]);
+const MAX_MESSAGES = 20;
+const MAX_CONTENT_LEN = 2000;
+
 export const askPharmacist = createServerFn({ method: "POST" })
   .inputValidator((input: { messages: ChatMessage[] }) => {
     if (!input || !Array.isArray(input.messages)) throw new Error("messages required");
-    return input;
+    if (input.messages.length === 0) throw new Error("messages required");
+    if (input.messages.length > MAX_MESSAGES) throw new Error("Too many messages");
+    const cleaned: ChatMessage[] = input.messages.map((m, i) => {
+      if (!m || typeof m !== "object") throw new Error(`Invalid message at ${i}`);
+      if (!ALLOWED_ROLES.has(m.role)) throw new Error(`Invalid role at ${i}`);
+      if (typeof m.content !== "string") throw new Error(`Invalid content at ${i}`);
+      if (m.content.length > MAX_CONTENT_LEN) throw new Error(`Message ${i} exceeds ${MAX_CONTENT_LEN} chars`);
+      return { role: m.role, content: m.content };
+    });
+    return { messages: cleaned };
   })
   .handler(async ({ data }): Promise<{ reply: string; lang: "am" | "en" }> => {
     const key = process.env.LOVABLE_API_KEY;

@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
+import { placeOrder } from "@/lib/orders.functions";
 
 const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
 const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
@@ -465,14 +466,23 @@ function PrescriptionUpload() {
 
   const addFiles = useCallback(async (list: FileList | null) => {
     if (!list || !user) return;
+    const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"]);
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     setBusy(true);
     setError(null);
     try {
       for (const file of Array.from(list)) {
+        if (!ALLOWED_MIME.has(file.type)) {
+          throw new Error(`Unsupported file type: ${file.name}. Allowed: JPG, PNG, WEBP, HEIC, PDF.`);
+        }
+        if (file.size > MAX_SIZE) {
+          throw new Error(`${file.name} exceeds the 10MB size limit.`);
+        }
         const path = `${user.id}/${Date.now()}-${file.name}`;
         const { error: upErr } = await supabase.storage.from("prescriptions").upload(path, file, {
           cacheControl: "3600",
           upsert: false,
+          contentType: file.type,
         });
         if (upErr) throw upErr;
         const { error: dbErr } = await supabase.from("prescriptions").insert({
@@ -784,8 +794,10 @@ function Checkout({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const submitOrder = useServerFn(placeOrder);
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const tax = +(subtotal * 0.08).toFixed(2);
@@ -796,15 +808,18 @@ function Checkout({
     if (cart.length === 0) return;
     if (step === 3 && user) {
       setPlacing(true);
+      setOrderError(null);
       try {
-        await supabase.from("orders").insert({
-          user_id: user.id,
-          items: cart.map((i) => ({ name: i.name, price: i.price, qty: i.qty })),
-          item_count: itemCount,
-          total,
-          status: "Processing",
+        await submitOrder({
+          data: {
+            items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+          },
         });
         queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+      } catch (err) {
+        setOrderError(err instanceof Error ? err.message : "Failed to place order");
+        setPlacing(false);
+        return;
       } finally {
         setPlacing(false);
       }
