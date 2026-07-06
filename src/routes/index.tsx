@@ -366,6 +366,8 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
 }
 
 function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
+  const { t, language } = useLanguage();
+  const amFont = language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined;
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-soft/90 via-background to-white" />
@@ -375,14 +377,17 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
-              <ShieldCheck className="h-3.5 w-3.5" /> HIPAA-compliant · Verified pharmacists
+              <ShieldCheck className="h-3.5 w-3.5" /> {t("hero.chip")}
             </div>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-              Your trusted pharmacy,<br />
-              <span className="text-primary">delivered to your door.</span>
+            <h1
+              className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl"
+              style={{ fontFamily: amFont }}
+            >
+              {t("hero.title")}<br />
+              <span className="text-primary">{t("hero.titleHighlight")}</span>
             </h1>
-            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Search 12,000+ medications, upload prescriptions securely, and get expert guidance from licensed pharmacists — all in one place.
+            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg" style={{ fontFamily: amFont }}>
+              {t("hero.description")}
             </p>
 
             <form
@@ -395,30 +400,31 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search medications, brands, or symptoms…"
+                  placeholder={t("hero.searchPlaceholder")}
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                  style={{ fontFamily: amFont }}
                 />
               </div>
               <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105">
-                Search
+                {t("hero.search")}
               </button>
             </form>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((t) => (
+              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((tag) => (
                 <button
-                  key={t}
-                  onClick={() => setSearchQuery(t)}
+                  key={tag}
+                  onClick={() => setSearchQuery(tag)}
                   className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground transition-all duration-300 hover:border-primary hover:text-primary hover:scale-105"
                 >
-                  {t}
+                  {tag}
                 </button>
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> Free delivery over $35</div>
-              <div className="flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> Encrypted health data</div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> 24/7 pharmacist chat</div>
+            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground" style={{ fontFamily: amFont }}>
+              <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> {t("hero.freeDelivery")}</div>
+              <div className="flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> {t("hero.encrypted")}</div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> {t("hero.chat247")}</div>
             </div>
           </div>
 
@@ -431,6 +437,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
 
 
 function HeroCard() {
+  const { currency } = useCurrency();
   return (
     <div className="relative">
       <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-success/15 to-transparent blur-2xl" />
@@ -464,8 +471,7 @@ function HeroCard() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold">{fmtUSD(m.usd)}</p>
-                <p className="text-[10px] text-muted-foreground">{fmtETB(m.usd)}</p>
+                <p className="text-sm font-semibold">{formatPrice(m.usd, currency)}</p>
               </div>
             </div>
           ))}
