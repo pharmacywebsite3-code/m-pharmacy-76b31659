@@ -257,6 +257,17 @@ function Logo() {
 function Header({ cartCount = 0 }: { cartCount?: number }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { language, setLanguage, t } = useLanguage();
+  const { currency, toggle: toggleCurrency } = useCurrency();
+  const [badgePop, setBadgePop] = useState(false);
+
+  // Animate the cart badge every time the count changes.
+  useEffect(() => {
+    if (cartCount === 0) return;
+    setBadgePop(true);
+    const id = window.setTimeout(() => setBadgePop(false), 350);
+    return () => window.clearTimeout(id);
+  }, [cartCount]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -268,14 +279,54 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <Logo />
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">Shop</a>
-          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">Prescriptions</a>
-          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">Checkout</a>
-          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">My Account</a>
+          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">{t("nav.shop")}</a>
+          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">{t("nav.prescriptions")}</a>
+          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">{t("nav.checkout")}</a>
+          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">{t("nav.account")}</a>
         </nav>
         <div className="flex items-center gap-2">
+          {/* Language switcher — EN | አማ */}
+          <div
+            role="group"
+            aria-label="Language"
+            className="hidden items-center overflow-hidden rounded-full border border-border bg-card text-xs font-semibold shadow-sm sm:inline-flex"
+          >
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
+              className={`px-2.5 py-1.5 transition-all duration-300 ${language === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              EN
+            </button>
+            <span className="h-4 w-px bg-border" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setLanguage("am")}
+              aria-pressed={language === "am"}
+              style={{ fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}
+              className={`px-2.5 py-1.5 transition-all duration-300 ${language === "am" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              አማ
+            </button>
+          </div>
+
+          {/* Currency switcher — USD | ETB */}
+          <button
+            type="button"
+            onClick={toggleCurrency}
+            aria-label="Toggle currency"
+            className="hidden items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-all duration-300 hover:bg-muted hover:scale-105 sm:inline-flex"
+            title={currency === "USD" ? "Switch to ETB" : "Switch to USD"}
+          >
+            <Languages className="h-3.5 w-3.5 text-primary" />
+            <span className={currency === "USD" ? "text-primary" : "text-muted-foreground"}>USD</span>
+            <span className="text-muted-foreground">·</span>
+            <span className={currency === "ETB" ? "text-primary" : "text-muted-foreground"}>ETB</span>
+          </button>
+
           <div className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary sm:flex">
-            <ShieldCheck className="h-3.5 w-3.5" /> Licensed Pharmacy
+            <ShieldCheck className="h-3.5 w-3.5" /> {t("nav.licensed")}
           </div>
           {user ? (
             <button
@@ -283,22 +334,31 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
               className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-all duration-300 hover:bg-muted hover:scale-105"
               title={user.email ?? undefined}
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut className="h-3.5 w-3.5" /> {t("nav.signOut")}
             </button>
           ) : (
             <Link
               to="/auth"
               className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
-              <UserIcon className="h-3.5 w-3.5" /> Sign in
+              <UserIcon className="h-3.5 w-3.5" /> {t("nav.signIn")}
             </Link>
           )}
-          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105">
-            <ShoppingCart className="h-4.5 w-4.5" />
+          <a
+            href="#checkout"
+            className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105"
+            aria-label="Cart"
+          >
+            <ShoppingCart className="h-4 w-4" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
+              <span
+                key={cartCount}
+                className={`absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-md transition-transform duration-300 ${badgePop ? "scale-125" : "scale-100"} animate-fade-in`}
+              >
+                {cartCount}
+              </span>
             )}
-          </button>
+          </a>
         </div>
       </div>
     </header>
