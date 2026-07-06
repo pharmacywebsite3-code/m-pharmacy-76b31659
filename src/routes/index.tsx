@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
+import { placeOrder } from "@/lib/orders.functions";
 
 const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
 const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
