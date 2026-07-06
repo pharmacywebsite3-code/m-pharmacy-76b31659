@@ -1258,6 +1258,7 @@ type OrderRow = {
 
 function Dashboard() {
   const { user, loading } = useAuth();
+  const { currency } = useCurrency();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
