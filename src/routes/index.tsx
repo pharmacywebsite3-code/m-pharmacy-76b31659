@@ -698,15 +698,16 @@ function Categories({
   activeCategory: string | null;
   onSelect: (category: string | null) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <section id="shop" className="mx-auto max-w-7xl px-6 py-10">
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Shop by category</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{t("products.category")}</h2>
           <p className="mt-2 text-muted-foreground">
             {activeCategory
-              ? `Browsing ${activeCategory.toLowerCase()}. Tap "All Products" to reset.`
-              : "Browse over-the-counter essentials curated by our pharmacists."}
+              ? `${t("products.browsing")} ${activeCategory}. ${t("products.resetHint")}`
+              : t("products.categorySubtitle")}
           </p>
         </div>
       </div>
@@ -714,6 +715,7 @@ function Categories({
       <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
         {categories.map((c) => {
           const isActive = activeCategory === c.name || (c.name === "All Products" && activeCategory === null);
+          const label = c.name === "All Products" ? t("products.allProducts") : c.name;
           return (
             <button
               key={c.name}
@@ -733,10 +735,7 @@ function Categories({
               <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"} transition-transform duration-300 group-hover:scale-110`}>
                 <c.icon className="h-6 w-6" />
               </div>
-              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
-              <p className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-                {c.count} products
-              </p>
+              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{label}</p>
             </button>
           );
         })}
@@ -754,8 +753,10 @@ function ProductGrid({
 }: {
   searchQuery: string;
   activeCategory: string | null;
-  onAdd: (p: { id: string; name: string; price: number }) => void;
+  onAdd: (p: Omit<CartItem, "qty">) => void;
 }) {
+  const { t } = useLanguage();
+  const { currency } = useCurrency();
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ["medications", "external", activeCategory ?? "all"],
@@ -770,7 +771,7 @@ function ProductGrid({
     p.category.toLowerCase().includes(query)
   );
 
-  const heading = activeCategory ? `${activeCategory}` : "All medications";
+  const heading = activeCategory ? `${activeCategory}` : t("products.allMedications");
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
@@ -778,12 +779,12 @@ function ProductGrid({
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
           <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {filtered.length} product{filtered.length === 1 ? "" : "s"}
+            {filtered.length} {t("products.productsCount")}
           </span>
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs">
           <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
-          {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
+          {isFetching ? t("products.syncing") : t("products.livePricing")}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
@@ -792,35 +793,82 @@ function ProductGrid({
               <div key={i} className="h-72 animate-pulse rounded-xl border border-border bg-card" />
             ))
           : filtered.map((p) => (
-              <article key={p.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+              <article
+                key={p.id}
+                className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md"
+              >
                 <div className="relative grid aspect-square place-items-center overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary-soft to-surface transition-all duration-300 group-hover:border-primary/30">
                   <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
-                  {p.badge && (
-                    <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur">
-                      {p.badge}
-                    </span>
-                  )}
-                  <span className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur ${
-                    p.inStock ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-                  }`}>
-                    {p.inStock ? `${p.stockCount} in stock` : "Out of stock"}
+
+                  {/* Regulatory badge — OTC vs Rx */}
+                  <span
+                    className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur ${
+                      p.isPrescriptionRequired
+                        ? "bg-amber-500/95 text-white"
+                        : "bg-success/90 text-white"
+                    }`}
+                  >
+                    {p.isPrescriptionRequired ? (
+                      <>
+                        <AlertTriangle className="h-3 w-3" strokeWidth={3} />
+                        {t("products.rx")}
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="h-3 w-3" strokeWidth={3} />
+                        {t("products.otc")}
+                      </>
+                    )}
+                  </span>
+
+                  <span
+                    className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur ${
+                      p.inStock ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                    }`}
+                  >
+                    {p.inStock ? `${p.stockCount} ${t("products.inStock")}` : t("products.outOfStock")}
                   </span>
                 </div>
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
+
+                  {/* Medical clarity — dosage + pack size */}
+                  <dl className="mt-2 space-y-0.5 text-[11px] leading-tight text-muted-foreground">
+                    <div className="flex items-baseline gap-1.5">
+                      <dt className="font-semibold uppercase tracking-wide text-foreground/70">
+                        {t("products.dosage")}:
+                      </dt>
+                      <dd className="tabular-nums">{p.dosage}</dd>
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <dt className="font-semibold uppercase tracking-wide text-foreground/70">
+                        {t("products.packSize")}:
+                      </dt>
+                      <dd className="tabular-nums">{p.packSize}</dd>
+                    </div>
+                  </dl>
+
                   <div className="mt-auto pt-4">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg font-bold tracking-tight">{fmtUSD(p.amountUSD)}</span>
-                      <span className="text-xs font-semibold text-muted-foreground">/ {fmtETB(p.amountUSD)}</span>
+                      <span className="text-lg font-bold tracking-tight">{formatPrice(p.amountUSD, currency)}</span>
                     </div>
                     <button
-                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.amountUSD })}
+                      onClick={() =>
+                        onAdd({
+                          id: p.id,
+                          name: p.name,
+                          price: p.amountUSD,
+                          isPrescriptionRequired: p.isPrescriptionRequired,
+                          dosage: p.dosage,
+                          packSize: p.packSize,
+                        })
+                      }
                       disabled={!p.inStock}
                       className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:bg-primary/90 hover:scale-105 disabled:opacity-40"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={3} />
-                      Add to Cart
+                      {t("products.addToCart")}
                     </button>
                   </div>
                 </div>
