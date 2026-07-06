@@ -112,6 +112,7 @@ function Home() {
 
 
 function VideoSplash() {
+  const { t, language } = useLanguage();
   const scrollToShop = () => {
     document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
