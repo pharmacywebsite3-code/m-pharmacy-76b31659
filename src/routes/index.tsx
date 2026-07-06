@@ -465,14 +465,23 @@ function PrescriptionUpload() {
 
   const addFiles = useCallback(async (list: FileList | null) => {
     if (!list || !user) return;
+    const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"]);
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     setBusy(true);
     setError(null);
     try {
       for (const file of Array.from(list)) {
+        if (!ALLOWED_MIME.has(file.type)) {
+          throw new Error(`Unsupported file type: ${file.name}. Allowed: JPG, PNG, WEBP, HEIC, PDF.`);
+        }
+        if (file.size > MAX_SIZE) {
+          throw new Error(`${file.name} exceeds the 10MB size limit.`);
+        }
         const path = `${user.id}/${Date.now()}-${file.name}`;
         const { error: upErr } = await supabase.storage.from("prescriptions").upload(path, file, {
           cacheControl: "3600",
           upsert: false,
+          contentType: file.type,
         });
         if (upErr) throw upErr;
         const { error: dbErr } = await supabase.from("prescriptions").insert({
