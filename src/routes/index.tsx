@@ -6,15 +6,22 @@ import {
   Search, Upload, ShieldCheck, Pill, HeartPulse, Bandage, Leaf, Baby,
   Stethoscope, ShoppingCart, Check, FileText, Truck, CreditCard,
   Bell, Package, RefreshCw, Clock, ChevronRight, Plus, Minus, X, Lock, LogOut, User as UserIcon,
+  Languages, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useCurrency, type Currency } from "@/hooks/useCurrency";
 import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
 import { placeOrder } from "@/lib/orders.functions";
 
-const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
-const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
-const fmtDual = (usd: number) => `${fmtUSD(usd)} / ${fmtETB(usd)}`;
+// Currency-aware price formatting.
+function formatPrice(usd: number, currency: Currency): string {
+  if (currency === "ETB") {
+    return `${(usd * ETB_PER_USD).toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB`;
+  }
+  return `$${usd.toFixed(2)}`;
+}
 import {
   Dialog,
   DialogContent,
