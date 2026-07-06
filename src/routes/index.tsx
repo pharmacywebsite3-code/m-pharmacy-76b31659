@@ -176,9 +176,9 @@ function VideoSplash() {
         {/* Trust chips */}
         <div className="mb-6 flex flex-wrap items-center justify-center gap-2 splash-fade" style={{ animationDelay: "0.1s" }}>
           {[
-            { label: "Fast Delivery", icon: "🚚" },
-            { label: "Verified Pharmacists", icon: "🛡️" },
-            { label: "AI-Powered", icon: "✨" },
+            { label: t("splash.chip1"), icon: "🚚" },
+            { label: t("splash.chip2"), icon: "🛡️" },
+            { label: t("splash.chip3"), icon: "✨" },
           ].map((c) => (
             <span
               key={c.label}
@@ -191,36 +191,30 @@ function VideoSplash() {
 
         <h1
           className="max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight text-foreground splash-fade sm:text-5xl md:text-6xl"
-          style={{ animationDelay: "0.25s" }}
+          style={{
+            animationDelay: "0.25s",
+            fontFamily: language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined,
+          }}
         >
-          Your Trusted Pharmacy,{" "}
+          {t("splash.titleLead")}{" "}
           <span className="bg-gradient-to-r from-primary to-success bg-clip-text text-transparent">
-            Powered by AI
+            {t("splash.titleHighlight")}
           </span>
           .
           <br />
           <span className="text-2xl font-medium text-muted-foreground sm:text-3xl md:text-4xl">
-            Fast Delivery Nationwide.
+            {t("splash.subtitle")}
           </span>
         </h1>
-
-        <p
-          className="mt-5 max-w-3xl text-lg font-medium text-foreground/80 splash-fade sm:text-xl"
-          style={{ animationDelay: "0.45s", fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}
-        >
-          የታመነው ፋርማሲዎ በዘመናዊ ቴክኖሎጂ።{" "}
-          <span className="text-primary">ፈጣን አቅርቦት በመላው ኢትዮጵያ።</span>
-        </p>
 
         <div className="mt-8 splash-fade" style={{ animationDelay: "0.65s" }}>
           <button
             type="button"
             onClick={scrollToShop}
             className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-primary to-success px-8 py-4 text-base font-semibold text-primary-foreground shadow-glow transition-all duration-300 hover:scale-105 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:text-lg"
+            style={{ fontFamily: language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined }}
           >
-            <span>Shop Medications</span>
-            <span className="h-5 w-px bg-primary-foreground/40" />
-            <span style={{ fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}>አሁኑኑ ይግዙ</span>
+            <span>{t("splash.cta")}</span>
             <svg
               className="ml-1 h-5 w-5 transition-transform duration-300 group-hover:translate-y-0.5"
               viewBox="0 0 24 24"
