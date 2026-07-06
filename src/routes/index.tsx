@@ -882,11 +882,11 @@ function ProductGrid({
 
 
 
-const steps = [
-  { id: 1, title: "Cart", icon: ShoppingCart },
-  { id: 2, title: "Shipping", icon: Truck },
-  { id: 3, title: "Payment", icon: CreditCard },
-  { id: 4, title: "Confirm", icon: Check },
+const stepDefs = [
+  { id: 1, icon: ShoppingCart, key: "cart" as const },
+  { id: 2, icon: Truck, key: "shipping" as const },
+  { id: 3, icon: CreditCard, key: "payment" as const },
+  { id: 4, icon: Check, key: "confirm" as const },
 ];
 
 function Checkout({
@@ -900,18 +900,39 @@ function Checkout({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
+  const { currency } = useCurrency();
   const submitOrder = useServerFn(placeOrder);
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  // Rx compliance: check if the signed-in user has at least one prescription on file.
+  const { data: prescriptionCount = 0 } = useQuery({
+    queryKey: ["prescription-count", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("prescriptions")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const hasRxItems = cart.some((i) => i.isPrescriptionRequired);
+  const hasPrescriptionOnFile = prescriptionCount > 0;
+  const rxBlocked = hasRxItems && !hasPrescriptionOnFile;
+
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const tax = +(subtotal * 0.08).toFixed(2);
+  const deliveryFee = subtotal >= 35 || subtotal === 0 ? 0 : 4.99;
   const itemCount = cart.reduce((s, i) => s + i.qty, 0);
-  const total = +(subtotal + tax).toFixed(2);
+  const total = +(subtotal + tax + deliveryFee).toFixed(2);
 
   async function nextStep() {
     if (cart.length === 0) return;
+    if (step === 3 && rxBlocked) return; // hard block on Rx items without prescription
     if (step === 3 && user) {
       setPlacing(true);
       setOrderError(null);
@@ -933,19 +954,23 @@ function Checkout({
     setStep(step === 4 ? 1 : step + 1);
   }
 
+  function scrollToUpload() {
+    document.getElementById("prescription")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <section id="checkout" className="mx-auto max-w-7xl px-6 py-16">
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
-          Checkout simulator
+          {t("checkout.chip")}
         </div>
-        <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">A checkout you can trust</h2>
-        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">Walk through every step — from cart to confirmation — in a transparent, secure flow.</p>
+        <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">{t("checkout.title")}</h2>
+        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">{t("checkout.subtitle")}</p>
       </div>
 
       <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:shadow-md">
         <div className="grid grid-cols-4 border-b border-border bg-surface">
-          {steps.map((s) => {
+          {stepDefs.map((s) => {
             const active = step === s.id;
             const done = step > s.id;
             return (
@@ -961,7 +986,7 @@ function Checkout({
                 }`}>
                   {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : s.id}
                 </span>
-                <span className="hidden sm:inline">{s.title}</span>
+                <span className="hidden sm:inline">{t(`checkout.steps.${s.key}`)}</span>
               </button>
             );
           })}
@@ -973,26 +998,36 @@ function Checkout({
             {step === 1 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Your cart</h3>
+                  <h3 className="text-lg font-bold">{t("checkout.yourCart")}</h3>
                   <span className="text-xs text-muted-foreground">
-                    {itemCount} item{itemCount === 1 ? "" : "s"}
+                    {itemCount} {t("checkout.items")}
                   </span>
                 </div>
                 {cart.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center text-sm text-muted-foreground transition-all duration-300 hover:border-primary/30 hover:bg-surface">
-                    Your cart is empty. Tap <span className="font-semibold text-foreground">“Add to Cart”</span> on any product above to get started.
+                    {t("checkout.cartEmpty")}
                   </div>
                 ) : (
                   cart.map((i) => (
                     <div key={i.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
-
                       <div className="flex items-center gap-3">
                         <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
                           <Pill className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-semibold">{i.name}</p>
-                          <p className="text-xs text-muted-foreground">{fmtDual(i.price)} each</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{i.name}</p>
+                            {i.isPrescriptionRequired && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                                <AlertTriangle className="h-2.5 w-2.5" strokeWidth={3} />
+                                {t("products.rx")}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            {i.dosage} · {i.packSize}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatPrice(i.price, currency)} each</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1008,34 +1043,57 @@ function Checkout({
                     </div>
                   ))
                 )}
+
+                {rxBlocked && (
+                  <RxComplianceAlert
+                    onUpload={scrollToUpload}
+                    signedIn={!!user}
+                    title={t("checkout.rxBlockTitle")}
+                    message={t("checkout.rxBlockMessage")}
+                    action={t("checkout.goToUpload")}
+                    signInPrompt={t("checkout.signInPrompt")}
+                  />
+                )}
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-bold">Shipping address</h3>
+                <h3 className="text-lg font-bold">{t("checkout.shipping")}</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Full name" placeholder="Jane Doe" />
-                  <Field label="Phone" placeholder="+1 555 0101" />
-                  <Field label="Address" placeholder="221B Baker Street" className="sm:col-span-2" />
-                  <Field label="City" placeholder="London" />
-                  <Field label="Postal code" placeholder="NW1 6XE" />
+                  <Field label="Phone" placeholder="+251 91 234 5678" />
+                  <Field label="Address" placeholder="Bole Road, Building 42" className="sm:col-span-2" />
+                  <Field label="City" placeholder="Addis Ababa" />
+                  <Field label="Postal code" placeholder="1000" />
                 </div>
                 <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md">
-                  <p className="font-semibold">Standard delivery</p>
-                  <p className="text-xs text-muted-foreground">Arrives Wed, Jul 1 — Free over $35</p>
+                  <p className="font-semibold">{t("checkout.standardDelivery")}</p>
+                  <p className="text-xs text-muted-foreground">{t("checkout.standardDeliveryHint")}</p>
                 </div>
               </div>
             )}
 
             {step === 3 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-bold">Payment method</h3>
+                <h3 className="text-lg font-bold">{t("checkout.payment")}</h3>
                 {!user && (
                   <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <Link to="/auth" className="font-semibold underline">Sign in</Link> to save this order to your account.
+                    <Link to="/auth" className="font-semibold underline">{t("nav.signIn")}</Link> — {t("checkout.signInPrompt")}
                   </div>
                 )}
+
+                {rxBlocked && (
+                  <RxComplianceAlert
+                    onUpload={scrollToUpload}
+                    signedIn={!!user}
+                    title={t("checkout.rxBlockTitle")}
+                    message={t("checkout.rxBlockMessage")}
+                    action={t("checkout.goToUpload")}
+                    signInPrompt={t("checkout.signInPrompt")}
+                  />
+                )}
+
                 <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1045,14 +1103,17 @@ function Checkout({
                     <Check className="h-4 w-4 text-primary" strokeWidth={3} />
                   </div>
                 </div>
-                <Field label="Card number" placeholder="4242 4242 4242 4242" />
+                <Field label={t("checkout.cardNumber")} placeholder="4242 4242 4242 4242" />
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Expiry" placeholder="12 / 28" />
-                  <Field label="CVC" placeholder="123" />
+                  <Field label={t("checkout.expiry")} placeholder="12 / 28" />
+                  <Field label={t("checkout.cvc")} placeholder="123" />
                 </div>
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Lock className="h-3.5 w-3.5" /> Encrypted with 256-bit TLS. PCI-DSS compliant.
+                  <Lock className="h-3.5 w-3.5" /> {t("checkout.encrypted")}
                 </p>
+                {orderError && (
+                  <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{orderError}</div>
+                )}
               </div>
             )}
 
@@ -1061,50 +1122,103 @@ function Checkout({
                 <div className="grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success">
                   <Check className="h-8 w-8" strokeWidth={3} />
                 </div>
-                <h3 className="mt-4 text-xl font-bold">Order confirmed</h3>
+                <h3 className="mt-4 text-xl font-bold">{t("checkout.confirmed")}</h3>
                 <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-                  {user
-                    ? "We've saved this order to your dashboard and emailed your receipt."
-                    : "Your order was simulated. Sign in next time to save it to your account."}
+                  {user ? t("checkout.confirmedHintUser") : t("checkout.confirmedHintGuest")}
                 </p>
               </div>
             )}
           </div>
 
           <aside className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t("checkout.orderSummary")}</h4>
             <dl className="mt-4 space-y-2 text-sm">
-              <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
-              <Row label="Subtotal" value={fmtDual(subtotal)} />
-              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : fmtDual(4.99)} />
-              <Row label="Tax (8%)" value={fmtDual(tax)} />
+              <Row label={`${t("checkout.items")} (${itemCount})`} value={formatPrice(subtotal, currency)} />
+              <Row label={t("checkout.subtotal")} value={formatPrice(subtotal, currency)} />
+              <Row label={t("checkout.delivery")} value={deliveryFee === 0 ? t("checkout.free") : formatPrice(deliveryFee, currency)} />
+              <Row label={t("checkout.tax")} value={formatPrice(tax, currency)} />
             </dl>
             <div className="my-4 border-t border-border" />
             <div className="flex items-center justify-between gap-3">
-              <span className="font-bold">Total</span>
+              <span className="font-bold">{t("checkout.total")}</span>
               <div className="text-right">
-                <div className="text-2xl font-extrabold leading-none">{fmtUSD(total)}</div>
-                <div className="mt-1 text-xs font-semibold text-muted-foreground">{fmtETB(total)}</div>
+                <div className="text-2xl font-extrabold leading-none">{formatPrice(total, currency)}</div>
               </div>
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
                 <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold transition-all duration-300 hover:bg-muted hover:shadow-sm">
-                  Back
+                  {t("checkout.back")}
                 </button>
               )}
               <button
                 onClick={nextStep}
-                disabled={placing || (step < 4 && cart.length === 0)}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60"
+                disabled={
+                  placing ||
+                  (step < 4 && cart.length === 0) ||
+                  (step === 3 && rxBlocked)
+                }
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+                title={step === 3 && rxBlocked ? t("checkout.rxBlockMessage") : undefined}
               >
-                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
+                {placing
+                  ? t("checkout.placing")
+                  : step === 4
+                    ? t("checkout.startOver")
+                    : step === 3
+                      ? t("checkout.placeOrder")
+                      : cart.length === 0
+                        ? t("checkout.cartEmptyBtn")
+                        : t("checkout.continue")}
               </button>
             </div>
           </aside>
         </div>
       </div>
     </section>
+  );
+}
+
+function RxComplianceAlert({
+  onUpload,
+  signedIn,
+  title,
+  message,
+  action,
+  signInPrompt,
+}: {
+  onUpload: () => void;
+  signedIn: boolean;
+  title: string;
+  message: string;
+  action: string;
+  signInPrompt: string;
+}) {
+  return (
+    <div className="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500 text-white">
+        <AlertTriangle className="h-4 w-4" strokeWidth={3} />
+      </div>
+      <div className="flex-1 space-y-2">
+        <p className="text-sm font-semibold text-amber-900">{title}</p>
+        <p className="text-xs text-amber-900/80">{message}</p>
+        {signedIn ? (
+          <button
+            onClick={onUpload}
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-300 hover:bg-amber-700 hover:scale-105"
+          >
+            <Upload className="h-3.5 w-3.5" /> {action}
+          </button>
+        ) : (
+          <Link
+            to="/auth"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-300 hover:bg-amber-700 hover:scale-105"
+          >
+            <UserIcon className="h-3.5 w-3.5" /> {signInPrompt}
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }
 
