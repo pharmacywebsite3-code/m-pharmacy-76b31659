@@ -43,13 +43,13 @@ export const Route = createFileRoute("/")({
 });
 
 const categories = [
-  { name: "All Products", icon: Search, count: 20, tone: "from-slate-50 to-slate-100" },
-  { name: "Wellness", icon: HeartPulse, count: 5, tone: "from-emerald-50 to-teal-50" },
-  { name: "First Aid", icon: Bandage, count: 3, tone: "from-rose-50 to-orange-50" },
-  { name: "Vitamins", icon: Pill, count: 3, tone: "from-amber-50 to-yellow-50" },
-  { name: "Herbal", icon: Leaf, count: 3, tone: "from-green-50 to-lime-50" },
-  { name: "Baby Care", icon: Baby, count: 3, tone: "from-sky-50 to-blue-50" },
-  { name: "Cold & Flu", icon: Stethoscope, count: 3, tone: "from-cyan-50 to-teal-50" },
+  { name: "All Products", icon: Search, tone: "from-slate-50 to-slate-100" },
+  { name: "Wellness", icon: HeartPulse, tone: "from-emerald-50 to-teal-50" },
+  { name: "First Aid", icon: Bandage, tone: "from-rose-50 to-orange-50" },
+  { name: "Vitamins", icon: Pill, tone: "from-amber-50 to-yellow-50" },
+  { name: "Herbal", icon: Leaf, tone: "from-green-50 to-lime-50" },
+  { name: "Baby Care", icon: Baby, tone: "from-sky-50 to-blue-50" },
+  { name: "Cold & Flu", icon: Stethoscope, tone: "from-cyan-50 to-teal-50" },
 ];
 
 
@@ -59,19 +59,14 @@ const refills = [
   { name: "Atorvastatin 20mg", due: "in 18 days", progress: 20 },
 ];
 
-type Product = {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  badge: string | null;
-};
-
 export type CartItem = {
   id: string;
   name: string;
   price: number;
   qty: number;
+  isPrescriptionRequired: boolean;
+  dosage: string;
+  packSize: string;
 };
 
 function Home() {
@@ -79,17 +74,12 @@ function Home() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
+  const addToCart = useCallback((p: Omit<CartItem, "qty">) => {
     setCart((prev) => {
       const found = prev.find((i) => i.id === p.id);
       if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
-      return [...prev, { id: p.id, name: p.name, price: p.price, qty: 1 }];
+      return [...prev, { ...p, qty: 1 }];
     });
-    // smooth scroll to checkout
-    if (typeof document !== "undefined") {
-      const el = document.getElementById("checkout");
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   }, []);
 
   const updateQty = useCallback((id: string, qty: number) => {
