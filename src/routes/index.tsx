@@ -6,15 +6,22 @@ import {
   Search, Upload, ShieldCheck, Pill, HeartPulse, Bandage, Leaf, Baby,
   Stethoscope, ShoppingCart, Check, FileText, Truck, CreditCard,
   Bell, Package, RefreshCw, Clock, ChevronRight, Plus, Minus, X, Lock, LogOut, User as UserIcon,
+  Languages, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useCurrency, type Currency } from "@/hooks/useCurrency";
 import { fetchMedications, ETB_PER_USD, type ExternalMedication } from "@/lib/medications.functions";
 import { placeOrder } from "@/lib/orders.functions";
 
-const fmtUSD = (usd: number) => `$${usd.toFixed(2)}`;
-const fmtETB = (usd: number) => `${(usd * ETB_PER_USD).toFixed(2)} ETB`;
-const fmtDual = (usd: number) => `${fmtUSD(usd)} / ${fmtETB(usd)}`;
+// Currency-aware price formatting.
+function formatPrice(usd: number, currency: Currency): string {
+  if (currency === "ETB") {
+    return `${(usd * ETB_PER_USD).toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB`;
+  }
+  return `$${usd.toFixed(2)}`;
+}
 import {
   Dialog,
   DialogContent,
@@ -36,13 +43,13 @@ export const Route = createFileRoute("/")({
 });
 
 const categories = [
-  { name: "All Products", icon: Search, count: 20, tone: "from-slate-50 to-slate-100" },
-  { name: "Wellness", icon: HeartPulse, count: 5, tone: "from-emerald-50 to-teal-50" },
-  { name: "First Aid", icon: Bandage, count: 3, tone: "from-rose-50 to-orange-50" },
-  { name: "Vitamins", icon: Pill, count: 3, tone: "from-amber-50 to-yellow-50" },
-  { name: "Herbal", icon: Leaf, count: 3, tone: "from-green-50 to-lime-50" },
-  { name: "Baby Care", icon: Baby, count: 3, tone: "from-sky-50 to-blue-50" },
-  { name: "Cold & Flu", icon: Stethoscope, count: 3, tone: "from-cyan-50 to-teal-50" },
+  { name: "All Products", icon: Search, tone: "from-slate-50 to-slate-100" },
+  { name: "Wellness", icon: HeartPulse, tone: "from-emerald-50 to-teal-50" },
+  { name: "First Aid", icon: Bandage, tone: "from-rose-50 to-orange-50" },
+  { name: "Vitamins", icon: Pill, tone: "from-amber-50 to-yellow-50" },
+  { name: "Herbal", icon: Leaf, tone: "from-green-50 to-lime-50" },
+  { name: "Baby Care", icon: Baby, tone: "from-sky-50 to-blue-50" },
+  { name: "Cold & Flu", icon: Stethoscope, tone: "from-cyan-50 to-teal-50" },
 ];
 
 
@@ -52,19 +59,14 @@ const refills = [
   { name: "Atorvastatin 20mg", due: "in 18 days", progress: 20 },
 ];
 
-type Product = {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  badge: string | null;
-};
-
 export type CartItem = {
   id: string;
   name: string;
   price: number;
   qty: number;
+  isPrescriptionRequired: boolean;
+  dosage: string;
+  packSize: string;
 };
 
 function Home() {
@@ -72,17 +74,12 @@ function Home() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const addToCart = useCallback((p: { id: string; name: string; price: number }) => {
+  const addToCart = useCallback((p: Omit<CartItem, "qty">) => {
     setCart((prev) => {
       const found = prev.find((i) => i.id === p.id);
       if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
-      return [...prev, { id: p.id, name: p.name, price: p.price, qty: 1 }];
+      return [...prev, { ...p, qty: 1 }];
     });
-    // smooth scroll to checkout
-    if (typeof document !== "undefined") {
-      const el = document.getElementById("checkout");
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   }, []);
 
   const updateQty = useCallback((id: string, qty: number) => {
@@ -115,6 +112,7 @@ function Home() {
 
 
 function VideoSplash() {
+  const { t, language } = useLanguage();
   const scrollToShop = () => {
     document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -178,9 +176,9 @@ function VideoSplash() {
         {/* Trust chips */}
         <div className="mb-6 flex flex-wrap items-center justify-center gap-2 splash-fade" style={{ animationDelay: "0.1s" }}>
           {[
-            { label: "Fast Delivery", icon: "🚚" },
-            { label: "Verified Pharmacists", icon: "🛡️" },
-            { label: "AI-Powered", icon: "✨" },
+            { label: t("splash.chip1"), icon: "🚚" },
+            { label: t("splash.chip2"), icon: "🛡️" },
+            { label: t("splash.chip3"), icon: "✨" },
           ].map((c) => (
             <span
               key={c.label}
@@ -193,36 +191,30 @@ function VideoSplash() {
 
         <h1
           className="max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight text-foreground splash-fade sm:text-5xl md:text-6xl"
-          style={{ animationDelay: "0.25s" }}
+          style={{
+            animationDelay: "0.25s",
+            fontFamily: language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined,
+          }}
         >
-          Your Trusted Pharmacy,{" "}
+          {t("splash.titleLead")}{" "}
           <span className="bg-gradient-to-r from-primary to-success bg-clip-text text-transparent">
-            Powered by AI
+            {t("splash.titleHighlight")}
           </span>
           .
           <br />
           <span className="text-2xl font-medium text-muted-foreground sm:text-3xl md:text-4xl">
-            Fast Delivery Nationwide.
+            {t("splash.subtitle")}
           </span>
         </h1>
-
-        <p
-          className="mt-5 max-w-3xl text-lg font-medium text-foreground/80 splash-fade sm:text-xl"
-          style={{ animationDelay: "0.45s", fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}
-        >
-          የታመነው ፋርማሲዎ በዘመናዊ ቴክኖሎጂ።{" "}
-          <span className="text-primary">ፈጣን አቅርቦት በመላው ኢትዮጵያ።</span>
-        </p>
 
         <div className="mt-8 splash-fade" style={{ animationDelay: "0.65s" }}>
           <button
             type="button"
             onClick={scrollToShop}
             className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-primary to-success px-8 py-4 text-base font-semibold text-primary-foreground shadow-glow transition-all duration-300 hover:scale-105 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:text-lg"
+            style={{ fontFamily: language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined }}
           >
-            <span>Shop Medications</span>
-            <span className="h-5 w-px bg-primary-foreground/40" />
-            <span style={{ fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}>አሁኑኑ ይግዙ</span>
+            <span>{t("splash.cta")}</span>
             <svg
               className="ml-1 h-5 w-5 transition-transform duration-300 group-hover:translate-y-0.5"
               viewBox="0 0 24 24"
@@ -265,6 +257,17 @@ function Logo() {
 function Header({ cartCount = 0 }: { cartCount?: number }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { language, setLanguage, t } = useLanguage();
+  const { currency, toggle: toggleCurrency } = useCurrency();
+  const [badgePop, setBadgePop] = useState(false);
+
+  // Animate the cart badge every time the count changes.
+  useEffect(() => {
+    if (cartCount === 0) return;
+    setBadgePop(true);
+    const id = window.setTimeout(() => setBadgePop(false), 350);
+    return () => window.clearTimeout(id);
+  }, [cartCount]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -276,14 +279,54 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <Logo />
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">Shop</a>
-          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">Prescriptions</a>
-          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">Checkout</a>
-          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">My Account</a>
+          <a href="#shop" className="transition-colors duration-300 hover:text-foreground">{t("nav.shop")}</a>
+          <a href="#prescription" className="transition-colors duration-300 hover:text-foreground">{t("nav.prescriptions")}</a>
+          <a href="#checkout" className="transition-colors duration-300 hover:text-foreground">{t("nav.checkout")}</a>
+          <a href="#dashboard" className="transition-colors duration-300 hover:text-foreground">{t("nav.account")}</a>
         </nav>
         <div className="flex items-center gap-2">
+          {/* Language switcher — EN | አማ */}
+          <div
+            role="group"
+            aria-label="Language"
+            className="hidden items-center overflow-hidden rounded-full border border-border bg-card text-xs font-semibold shadow-sm sm:inline-flex"
+          >
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
+              className={`px-2.5 py-1.5 transition-all duration-300 ${language === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              EN
+            </button>
+            <span className="h-4 w-px bg-border" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setLanguage("am")}
+              aria-pressed={language === "am"}
+              style={{ fontFamily: "'Noto Sans Ethiopic', system-ui, sans-serif" }}
+              className={`px-2.5 py-1.5 transition-all duration-300 ${language === "am" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              አማ
+            </button>
+          </div>
+
+          {/* Currency switcher — USD | ETB */}
+          <button
+            type="button"
+            onClick={toggleCurrency}
+            aria-label="Toggle currency"
+            className="hidden items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-all duration-300 hover:bg-muted hover:scale-105 sm:inline-flex"
+            title={currency === "USD" ? "Switch to ETB" : "Switch to USD"}
+          >
+            <Languages className="h-3.5 w-3.5 text-primary" />
+            <span className={currency === "USD" ? "text-primary" : "text-muted-foreground"}>USD</span>
+            <span className="text-muted-foreground">·</span>
+            <span className={currency === "ETB" ? "text-primary" : "text-muted-foreground"}>ETB</span>
+          </button>
+
           <div className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary sm:flex">
-            <ShieldCheck className="h-3.5 w-3.5" /> Licensed Pharmacy
+            <ShieldCheck className="h-3.5 w-3.5" /> {t("nav.licensed")}
           </div>
           {user ? (
             <button
@@ -291,22 +334,31 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
               className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-all duration-300 hover:bg-muted hover:scale-105"
               title={user.email ?? undefined}
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut className="h-3.5 w-3.5" /> {t("nav.signOut")}
             </button>
           ) : (
             <Link
               to="/auth"
               className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:scale-105"
             >
-              <UserIcon className="h-3.5 w-3.5" /> Sign in
+              <UserIcon className="h-3.5 w-3.5" /> {t("nav.signIn")}
             </Link>
           )}
-          <button className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105">
-            <ShoppingCart className="h-4.5 w-4.5" />
+          <a
+            href="#checkout"
+            className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card transition-all duration-300 hover:bg-muted hover:scale-105"
+            aria-label="Cart"
+          >
+            <ShoppingCart className="h-4 w-4" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cartCount}</span>
+              <span
+                key={cartCount}
+                className={`absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-md transition-transform duration-300 ${badgePop ? "scale-125" : "scale-100"} animate-fade-in`}
+              >
+                {cartCount}
+              </span>
             )}
-          </button>
+          </a>
         </div>
       </div>
     </header>
@@ -314,6 +366,8 @@ function Header({ cartCount = 0 }: { cartCount?: number }) {
 }
 
 function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
+  const { t, language } = useLanguage();
+  const amFont = language === "am" ? "'Noto Sans Ethiopic', system-ui, sans-serif" : undefined;
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-soft/90 via-background to-white" />
@@ -323,14 +377,17 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
-              <ShieldCheck className="h-3.5 w-3.5" /> HIPAA-compliant · Verified pharmacists
+              <ShieldCheck className="h-3.5 w-3.5" /> {t("hero.chip")}
             </div>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-              Your trusted pharmacy,<br />
-              <span className="text-primary">delivered to your door.</span>
+            <h1
+              className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl"
+              style={{ fontFamily: amFont }}
+            >
+              {t("hero.title")}<br />
+              <span className="text-primary">{t("hero.titleHighlight")}</span>
             </h1>
-            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Search 12,000+ medications, upload prescriptions securely, and get expert guidance from licensed pharmacists — all in one place.
+            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg" style={{ fontFamily: amFont }}>
+              {t("hero.description")}
             </p>
 
             <form
@@ -343,30 +400,31 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search medications, brands, or symptoms…"
+                  placeholder={t("hero.searchPlaceholder")}
                   className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                  style={{ fontFamily: amFont }}
                 />
               </div>
               <button className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-105">
-                Search
+                {t("hero.search")}
               </button>
             </form>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((t) => (
+              {["Paracetamol", "Vitamin C", "Aspirin", "Insulin", "Ventolin", "Allergy"].map((tag) => (
                 <button
-                  key={t}
-                  onClick={() => setSearchQuery(t)}
+                  key={tag}
+                  onClick={() => setSearchQuery(tag)}
                   className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground transition-all duration-300 hover:border-primary hover:text-primary hover:scale-105"
                 >
-                  {t}
+                  {tag}
                 </button>
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> Free delivery over $35</div>
-              <div className="flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> Encrypted health data</div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> 24/7 pharmacist chat</div>
+            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground" style={{ fontFamily: amFont }}>
+              <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> {t("hero.freeDelivery")}</div>
+              <div className="flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> {t("hero.encrypted")}</div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> {t("hero.chat247")}</div>
             </div>
           </div>
 
@@ -379,6 +437,7 @@ function Hero({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQ
 
 
 function HeroCard() {
+  const { currency } = useCurrency();
   return (
     <div className="relative">
       <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-success/15 to-transparent blur-2xl" />
@@ -412,8 +471,7 @@ function HeroCard() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold">{fmtUSD(m.usd)}</p>
-                <p className="text-[10px] text-muted-foreground">{fmtETB(m.usd)}</p>
+                <p className="text-sm font-semibold">{formatPrice(m.usd, currency)}</p>
               </div>
             </div>
           ))}
@@ -640,15 +698,16 @@ function Categories({
   activeCategory: string | null;
   onSelect: (category: string | null) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <section id="shop" className="mx-auto max-w-7xl px-6 py-10">
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Shop by category</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{t("products.category")}</h2>
           <p className="mt-2 text-muted-foreground">
             {activeCategory
-              ? `Browsing ${activeCategory.toLowerCase()}. Tap "All Products" to reset.`
-              : "Browse over-the-counter essentials curated by our pharmacists."}
+              ? `${t("products.browsing")} ${activeCategory}. ${t("products.resetHint")}`
+              : t("products.categorySubtitle")}
           </p>
         </div>
       </div>
@@ -656,6 +715,7 @@ function Categories({
       <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
         {categories.map((c) => {
           const isActive = activeCategory === c.name || (c.name === "All Products" && activeCategory === null);
+          const label = c.name === "All Products" ? t("products.allProducts") : c.name;
           return (
             <button
               key={c.name}
@@ -675,10 +735,7 @@ function Categories({
               <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${c.tone} ${isActive ? "text-primary" : "text-foreground"} transition-transform duration-300 group-hover:scale-110`}>
                 <c.icon className="h-6 w-6" />
               </div>
-              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{c.name}</p>
-              <p className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-                {c.count} products
-              </p>
+              <p className={`mt-4 font-semibold ${isActive ? "text-primary-foreground" : ""}`}>{label}</p>
             </button>
           );
         })}
@@ -696,8 +753,10 @@ function ProductGrid({
 }: {
   searchQuery: string;
   activeCategory: string | null;
-  onAdd: (p: { id: string; name: string; price: number }) => void;
+  onAdd: (p: Omit<CartItem, "qty">) => void;
 }) {
+  const { t } = useLanguage();
+  const { currency } = useCurrency();
   const loadMedications = useServerFn(fetchMedications);
   const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ["medications", "external", activeCategory ?? "all"],
@@ -712,7 +771,7 @@ function ProductGrid({
     p.category.toLowerCase().includes(query)
   );
 
-  const heading = activeCategory ? `${activeCategory}` : "All medications";
+  const heading = activeCategory ? `${activeCategory}` : t("products.allMedications");
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
@@ -720,12 +779,12 @@ function ProductGrid({
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
           <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {filtered.length} product{filtered.length === 1 ? "" : "s"}
+            {filtered.length} {t("products.productsCount")}
           </span>
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs">
           <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-500 animate-pulse" : "bg-success"}`} />
-          {isFetching ? "Syncing live pricing…" : "Live pricing from pharma network"}
+          {isFetching ? t("products.syncing") : t("products.livePricing")}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
@@ -734,35 +793,82 @@ function ProductGrid({
               <div key={i} className="h-72 animate-pulse rounded-xl border border-border bg-card" />
             ))
           : filtered.map((p) => (
-              <article key={p.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+              <article
+                key={p.id}
+                className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md"
+              >
                 <div className="relative grid aspect-square place-items-center overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary-soft to-surface transition-all duration-300 group-hover:border-primary/30">
                   <Pill className="h-12 w-12 text-primary/70 transition duration-300 group-hover:scale-110" />
-                  {p.badge && (
-                    <span className="absolute left-3 top-3 rounded-full bg-card/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur">
-                      {p.badge}
-                    </span>
-                  )}
-                  <span className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur ${
-                    p.inStock ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-                  }`}>
-                    {p.inStock ? `${p.stockCount} in stock` : "Out of stock"}
+
+                  {/* Regulatory badge — OTC vs Rx */}
+                  <span
+                    className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur ${
+                      p.isPrescriptionRequired
+                        ? "bg-amber-500/95 text-white"
+                        : "bg-success/90 text-white"
+                    }`}
+                  >
+                    {p.isPrescriptionRequired ? (
+                      <>
+                        <AlertTriangle className="h-3 w-3" strokeWidth={3} />
+                        {t("products.rx")}
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="h-3 w-3" strokeWidth={3} />
+                        {t("products.otc")}
+                      </>
+                    )}
+                  </span>
+
+                  <span
+                    className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur ${
+                      p.inStock ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                    }`}
+                  >
+                    {p.inStock ? `${p.stockCount} ${t("products.inStock")}` : t("products.outOfStock")}
                   </span>
                 </div>
                 <div className="mt-4 flex flex-1 flex-col">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category}</p>
                   <h3 className="font-serif mt-1 text-[17px] font-medium leading-snug text-foreground">{p.name}</h3>
+
+                  {/* Medical clarity — dosage + pack size */}
+                  <dl className="mt-2 space-y-0.5 text-[11px] leading-tight text-muted-foreground">
+                    <div className="flex items-baseline gap-1.5">
+                      <dt className="font-semibold uppercase tracking-wide text-foreground/70">
+                        {t("products.dosage")}:
+                      </dt>
+                      <dd className="tabular-nums">{p.dosage}</dd>
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <dt className="font-semibold uppercase tracking-wide text-foreground/70">
+                        {t("products.packSize")}:
+                      </dt>
+                      <dd className="tabular-nums">{p.packSize}</dd>
+                    </div>
+                  </dl>
+
                   <div className="mt-auto pt-4">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg font-bold tracking-tight">{fmtUSD(p.amountUSD)}</span>
-                      <span className="text-xs font-semibold text-muted-foreground">/ {fmtETB(p.amountUSD)}</span>
+                      <span className="text-lg font-bold tracking-tight">{formatPrice(p.amountUSD, currency)}</span>
                     </div>
                     <button
-                      onClick={() => onAdd({ id: p.id, name: p.name, price: p.amountUSD })}
+                      onClick={() =>
+                        onAdd({
+                          id: p.id,
+                          name: p.name,
+                          price: p.amountUSD,
+                          isPrescriptionRequired: p.isPrescriptionRequired,
+                          dosage: p.dosage,
+                          packSize: p.packSize,
+                        })
+                      }
                       disabled={!p.inStock}
                       className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:bg-primary/90 hover:scale-105 disabled:opacity-40"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={3} />
-                      Add to Cart
+                      {t("products.addToCart")}
                     </button>
                   </div>
                 </div>
@@ -776,11 +882,11 @@ function ProductGrid({
 
 
 
-const steps = [
-  { id: 1, title: "Cart", icon: ShoppingCart },
-  { id: 2, title: "Shipping", icon: Truck },
-  { id: 3, title: "Payment", icon: CreditCard },
-  { id: 4, title: "Confirm", icon: Check },
+const stepDefs = [
+  { id: 1, icon: ShoppingCart, key: "cart" as const },
+  { id: 2, icon: Truck, key: "shipping" as const },
+  { id: 3, icon: CreditCard, key: "payment" as const },
+  { id: 4, icon: Check, key: "confirm" as const },
 ];
 
 function Checkout({
@@ -794,18 +900,39 @@ function Checkout({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
+  const { currency } = useCurrency();
   const submitOrder = useServerFn(placeOrder);
   const [step, setStep] = useState(1);
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  // Rx compliance: check if the signed-in user has at least one prescription on file.
+  const { data: prescriptionCount = 0 } = useQuery({
+    queryKey: ["prescription-count", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("prescriptions")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const hasRxItems = cart.some((i) => i.isPrescriptionRequired);
+  const hasPrescriptionOnFile = prescriptionCount > 0;
+  const rxBlocked = hasRxItems && !hasPrescriptionOnFile;
+
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const tax = +(subtotal * 0.08).toFixed(2);
+  const deliveryFee = subtotal >= 35 || subtotal === 0 ? 0 : 4.99;
   const itemCount = cart.reduce((s, i) => s + i.qty, 0);
-  const total = +(subtotal + tax).toFixed(2);
+  const total = +(subtotal + tax + deliveryFee).toFixed(2);
 
   async function nextStep() {
     if (cart.length === 0) return;
+    if (step === 3 && rxBlocked) return; // hard block on Rx items without prescription
     if (step === 3 && user) {
       setPlacing(true);
       setOrderError(null);
@@ -827,19 +954,23 @@ function Checkout({
     setStep(step === 4 ? 1 : step + 1);
   }
 
+  function scrollToUpload() {
+    document.getElementById("prescription")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <section id="checkout" className="mx-auto max-w-7xl px-6 py-16">
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm animate-fade-in">
-          Checkout simulator
+          {t("checkout.chip")}
         </div>
-        <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">A checkout you can trust</h2>
-        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">Walk through every step — from cart to confirmation — in a transparent, secure flow.</p>
+        <h2 className="mt-4 text-3xl font-extrabold tracking-tight md:text-4xl">{t("checkout.title")}</h2>
+        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">{t("checkout.subtitle")}</p>
       </div>
 
       <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:shadow-md">
         <div className="grid grid-cols-4 border-b border-border bg-surface">
-          {steps.map((s) => {
+          {stepDefs.map((s) => {
             const active = step === s.id;
             const done = step > s.id;
             return (
@@ -855,7 +986,7 @@ function Checkout({
                 }`}>
                   {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : s.id}
                 </span>
-                <span className="hidden sm:inline">{s.title}</span>
+                <span className="hidden sm:inline">{t(`checkout.steps.${s.key}`)}</span>
               </button>
             );
           })}
@@ -867,26 +998,36 @@ function Checkout({
             {step === 1 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Your cart</h3>
+                  <h3 className="text-lg font-bold">{t("checkout.yourCart")}</h3>
                   <span className="text-xs text-muted-foreground">
-                    {itemCount} item{itemCount === 1 ? "" : "s"}
+                    {itemCount} {t("checkout.items")}
                   </span>
                 </div>
                 {cart.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border bg-surface/50 p-8 text-center text-sm text-muted-foreground transition-all duration-300 hover:border-primary/30 hover:bg-surface">
-                    Your cart is empty. Tap <span className="font-semibold text-foreground">“Add to Cart”</span> on any product above to get started.
+                    {t("checkout.cartEmpty")}
                   </div>
                 ) : (
                   cart.map((i) => (
                     <div key={i.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
-
                       <div className="flex items-center gap-3">
                         <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary">
                           <Pill className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-semibold">{i.name}</p>
-                          <p className="text-xs text-muted-foreground">{fmtDual(i.price)} each</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{i.name}</p>
+                            {i.isPrescriptionRequired && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                                <AlertTriangle className="h-2.5 w-2.5" strokeWidth={3} />
+                                {t("products.rx")}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            {i.dosage} · {i.packSize}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatPrice(i.price, currency)} each</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -902,34 +1043,57 @@ function Checkout({
                     </div>
                   ))
                 )}
+
+                {rxBlocked && (
+                  <RxComplianceAlert
+                    onUpload={scrollToUpload}
+                    signedIn={!!user}
+                    title={t("checkout.rxBlockTitle")}
+                    message={t("checkout.rxBlockMessage")}
+                    action={t("checkout.goToUpload")}
+                    signInPrompt={t("checkout.signInPrompt")}
+                  />
+                )}
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-bold">Shipping address</h3>
+                <h3 className="text-lg font-bold">{t("checkout.shipping")}</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Full name" placeholder="Jane Doe" />
-                  <Field label="Phone" placeholder="+1 555 0101" />
-                  <Field label="Address" placeholder="221B Baker Street" className="sm:col-span-2" />
-                  <Field label="City" placeholder="London" />
-                  <Field label="Postal code" placeholder="NW1 6XE" />
+                  <Field label="Phone" placeholder="+251 91 234 5678" />
+                  <Field label="Address" placeholder="Bole Road, Building 42" className="sm:col-span-2" />
+                  <Field label="City" placeholder="Addis Ababa" />
+                  <Field label="Postal code" placeholder="1000" />
                 </div>
                 <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md">
-                  <p className="font-semibold">Standard delivery</p>
-                  <p className="text-xs text-muted-foreground">Arrives Wed, Jul 1 — Free over $35</p>
+                  <p className="font-semibold">{t("checkout.standardDelivery")}</p>
+                  <p className="text-xs text-muted-foreground">{t("checkout.standardDeliveryHint")}</p>
                 </div>
               </div>
             )}
 
             {step === 3 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-bold">Payment method</h3>
+                <h3 className="text-lg font-bold">{t("checkout.payment")}</h3>
                 {!user && (
                   <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <Link to="/auth" className="font-semibold underline">Sign in</Link> to save this order to your account.
+                    <Link to="/auth" className="font-semibold underline">{t("nav.signIn")}</Link> — {t("checkout.signInPrompt")}
                   </div>
                 )}
+
+                {rxBlocked && (
+                  <RxComplianceAlert
+                    onUpload={scrollToUpload}
+                    signedIn={!!user}
+                    title={t("checkout.rxBlockTitle")}
+                    message={t("checkout.rxBlockMessage")}
+                    action={t("checkout.goToUpload")}
+                    signInPrompt={t("checkout.signInPrompt")}
+                  />
+                )}
+
                 <div className="rounded-xl border-2 border-primary bg-primary-soft/40 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -939,14 +1103,17 @@ function Checkout({
                     <Check className="h-4 w-4 text-primary" strokeWidth={3} />
                   </div>
                 </div>
-                <Field label="Card number" placeholder="4242 4242 4242 4242" />
+                <Field label={t("checkout.cardNumber")} placeholder="4242 4242 4242 4242" />
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Expiry" placeholder="12 / 28" />
-                  <Field label="CVC" placeholder="123" />
+                  <Field label={t("checkout.expiry")} placeholder="12 / 28" />
+                  <Field label={t("checkout.cvc")} placeholder="123" />
                 </div>
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Lock className="h-3.5 w-3.5" /> Encrypted with 256-bit TLS. PCI-DSS compliant.
+                  <Lock className="h-3.5 w-3.5" /> {t("checkout.encrypted")}
                 </p>
+                {orderError && (
+                  <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{orderError}</div>
+                )}
               </div>
             )}
 
@@ -955,50 +1122,103 @@ function Checkout({
                 <div className="grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success">
                   <Check className="h-8 w-8" strokeWidth={3} />
                 </div>
-                <h3 className="mt-4 text-xl font-bold">Order confirmed</h3>
+                <h3 className="mt-4 text-xl font-bold">{t("checkout.confirmed")}</h3>
                 <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-                  {user
-                    ? "We've saved this order to your dashboard and emailed your receipt."
-                    : "Your order was simulated. Sign in next time to save it to your account."}
+                  {user ? t("checkout.confirmedHintUser") : t("checkout.confirmedHintGuest")}
                 </p>
               </div>
             )}
           </div>
 
           <aside className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order summary</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t("checkout.orderSummary")}</h4>
             <dl className="mt-4 space-y-2 text-sm">
-              <Row label={`Items (${itemCount})`} value={fmtDual(subtotal)} />
-              <Row label="Subtotal" value={fmtDual(subtotal)} />
-              <Row label="Delivery" value={subtotal >= 35 || subtotal === 0 ? "Free" : fmtDual(4.99)} />
-              <Row label="Tax (8%)" value={fmtDual(tax)} />
+              <Row label={`${t("checkout.items")} (${itemCount})`} value={formatPrice(subtotal, currency)} />
+              <Row label={t("checkout.subtotal")} value={formatPrice(subtotal, currency)} />
+              <Row label={t("checkout.delivery")} value={deliveryFee === 0 ? t("checkout.free") : formatPrice(deliveryFee, currency)} />
+              <Row label={t("checkout.tax")} value={formatPrice(tax, currency)} />
             </dl>
             <div className="my-4 border-t border-border" />
             <div className="flex items-center justify-between gap-3">
-              <span className="font-bold">Total</span>
+              <span className="font-bold">{t("checkout.total")}</span>
               <div className="text-right">
-                <div className="text-2xl font-extrabold leading-none">{fmtUSD(total)}</div>
-                <div className="mt-1 text-xs font-semibold text-muted-foreground">{fmtETB(total)}</div>
+                <div className="text-2xl font-extrabold leading-none">{formatPrice(total, currency)}</div>
               </div>
             </div>
             <div className="mt-6 flex gap-2">
               {step > 1 && step < 4 && (
                 <button onClick={() => setStep(step - 1)} className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold transition-all duration-300 hover:bg-muted hover:shadow-sm">
-                  Back
+                  {t("checkout.back")}
                 </button>
               )}
               <button
                 onClick={nextStep}
-                disabled={placing || (step < 4 && cart.length === 0)}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60"
+                disabled={
+                  placing ||
+                  (step < 4 && cart.length === 0) ||
+                  (step === 3 && rxBlocked)
+                }
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:opacity-90 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+                title={step === 3 && rxBlocked ? t("checkout.rxBlockMessage") : undefined}
               >
-                {placing ? "Placing…" : step === 4 ? "Start over" : step === 3 ? "Place order" : cart.length === 0 ? "Cart empty" : "Continue"}
+                {placing
+                  ? t("checkout.placing")
+                  : step === 4
+                    ? t("checkout.startOver")
+                    : step === 3
+                      ? t("checkout.placeOrder")
+                      : cart.length === 0
+                        ? t("checkout.cartEmptyBtn")
+                        : t("checkout.continue")}
               </button>
             </div>
           </aside>
         </div>
       </div>
     </section>
+  );
+}
+
+function RxComplianceAlert({
+  onUpload,
+  signedIn,
+  title,
+  message,
+  action,
+  signInPrompt,
+}: {
+  onUpload: () => void;
+  signedIn: boolean;
+  title: string;
+  message: string;
+  action: string;
+  signInPrompt: string;
+}) {
+  return (
+    <div className="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500 text-white">
+        <AlertTriangle className="h-4 w-4" strokeWidth={3} />
+      </div>
+      <div className="flex-1 space-y-2">
+        <p className="text-sm font-semibold text-amber-900">{title}</p>
+        <p className="text-xs text-amber-900/80">{message}</p>
+        {signedIn ? (
+          <button
+            onClick={onUpload}
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-300 hover:bg-amber-700 hover:scale-105"
+          >
+            <Upload className="h-3.5 w-3.5" /> {action}
+          </button>
+        ) : (
+          <Link
+            to="/auth"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-300 hover:bg-amber-700 hover:scale-105"
+          >
+            <UserIcon className="h-3.5 w-3.5" /> {signInPrompt}
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1038,6 +1258,7 @@ type OrderRow = {
 
 function Dashboard() {
   const { user, loading } = useAuth();
+  const { currency } = useCurrency();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -1133,8 +1354,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{fmtUSD(o.total)}</p>
-                      <p className="text-[10px] text-muted-foreground">{fmtETB(o.total)}</p>
+                      <p className="font-semibold">{formatPrice(o.total, currency)}</p>
                       <span className={`text-xs font-semibold ${o.status === "Delivered" ? "text-success" : "text-primary"}`}>
                         {o.status}
                       </span>
@@ -1176,17 +1396,21 @@ function Dashboard() {
 }
 
 function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 md:grid-cols-4">
         <div>
           <Logo />
-          <p className="mt-3 text-sm text-muted-foreground">Licensed online pharmacy serving patients since 2014.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("footer.tagline")}</p>
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+            <ShieldCheck className="h-3.5 w-3.5" /> Regulated by EFDA
+          </div>
         </div>
         {[
-          { title: "Shop", links: ["Wellness", "Vitamins", "First Aid", "Baby Care"] },
-          { title: "Services", links: ["Prescription Upload", "Refill Reminders", "Pharmacist Chat", "Insurance"] },
-          { title: "Company", links: ["About", "Privacy", "Terms", "Contact"] },
+          { title: t("footer.shop"), links: ["Wellness", "Vitamins", "First Aid", "Baby Care"] },
+          { title: t("footer.services"), links: ["Prescription Upload", "Refill Reminders", "Pharmacist Chat", "Insurance"] },
+          { title: t("footer.company"), links: ["About", "Privacy", "Terms", "Contact"] },
         ].map((col) => (
           <div key={col.title}>
             <h5 className="text-sm font-bold">{col.title}</h5>
@@ -1197,7 +1421,7 @@ function Footer() {
         ))}
       </div>
       <div className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-        © 2026 M-Pharmacy · NABP-accredited · Licensed in all 50 states
+        © 2026 {t("footer.copyright")}
       </div>
     </footer>
   );
